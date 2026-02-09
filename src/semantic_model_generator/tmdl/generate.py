@@ -4,6 +4,7 @@ from collections.abc import Sequence
 
 from semantic_model_generator.domain.types import (
     ColumnMetadata,
+    Relationship,
     TableClassification,
     TableMetadata,
 )
@@ -273,3 +274,43 @@ def generate_table_tmdl(
         raise ValueError(f"Generated table TMDL has indentation errors:\n{error_text}")
 
     return content
+
+
+def generate_relationships_tmdl(relationships: Sequence[Relationship]) -> str:
+    """Generate relationships.tmdl file content.
+
+    Args:
+        relationships: Sequence of inferred relationships.
+
+    Returns:
+        TMDL relationships definitions with active/inactive, fromColumn, toColumn.
+    """
+    raise NotImplementedError("Task 1: RED - to be implemented in Task 2")
+
+
+def generate_all_tmdl(
+    model_name: str,
+    tables: Sequence[TableMetadata],
+    classifications: dict[tuple[str, str], TableClassification],
+    relationships: Sequence[Relationship],
+    key_prefixes: Sequence[str],
+    catalog_name: str,
+) -> dict[str, str]:
+    """Generate complete TMDL semantic model as a dict of file paths to content.
+
+    Args:
+        model_name: Name of the semantic model.
+        tables: All tables in the model.
+        classifications: Map of (schema, table) to TableClassification.
+        relationships: All inferred relationships.
+        key_prefixes: Prefixes identifying key columns.
+        catalog_name: Fabric catalog name for DirectLake expression.
+
+    Returns:
+        Dict mapping relative file paths to their content strings.
+        Example keys: ".platform", "definition.pbism", "definition/database.tmdl",
+        "definition/model.tmdl", "definition/expressions.tmdl",
+        "definition/relationships.tmdl", "definition/tables/Customer.tmdl",
+        "diagramLayout.json"
+    """
+    raise NotImplementedError("Task 1: RED - to be implemented in Task 2")

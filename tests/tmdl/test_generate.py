@@ -1,16 +1,22 @@
 """Tests for TMDL generation functions."""
 
+import json
+import uuid
+
 from semantic_model_generator.domain.types import (
     ColumnMetadata,
+    Relationship,
     TableClassification,
     TableMetadata,
 )
 from semantic_model_generator.tmdl.generate import (
+    generate_all_tmdl,
     generate_column_tmdl,
     generate_database_tmdl,
     generate_expressions_tmdl,
     generate_model_tmdl,
     generate_partition_tmdl,
+    generate_relationships_tmdl,
     generate_table_tmdl,
 )
 from semantic_model_generator.utils.identifiers import quote_tmdl_identifier
@@ -36,6 +42,25 @@ def make_column(
 def make_table(schema: str, table: str, columns: list[ColumnMetadata]) -> TableMetadata:
     """Create a TableMetadata for testing."""
     return TableMetadata(schema_name=schema, table_name=table, columns=tuple(columns))
+
+
+def make_relationship(
+    from_table: str,
+    from_column: str,
+    to_table: str,
+    to_column: str,
+    is_active: bool = True,
+) -> Relationship:
+    """Create a Relationship for testing."""
+    rel_id = uuid.uuid4()
+    return Relationship(
+        id=rel_id,
+        from_table=from_table,
+        from_column=from_column,
+        to_table=to_table,
+        to_column=to_column,
+        is_active=is_active,
+    )
 
 
 # generate_database_tmdl tests
@@ -432,3 +457,243 @@ def test_generate_model_tmdl_is_deterministic() -> None:
     output2 = generate_model_tmdl("TestModel", table_names, classifications)
 
     assert output1 == output2
+
+
+# generate_relationships_tmdl tests
+def test_generate_relationships_tmdl_single_active_relationship() -> None:
+    """Relationships TMDL with single active relationship contains correct syntax."""
+    rel = make_relationship(
+        "dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer", is_active=True
+    )
+    output = generate_relationships_tmdl([rel])
+
+    # Should contain relationship UUID
+    assert f"relationship {rel.id}" in output
+    # Should contain fromColumn with quoted table name and unquoted column
+    assert "fromColumn: 'FactSales'.ID_Customer" in output
+    # Should contain toColumn with quoted table name and unquoted column
+    assert "toColumn: 'DimCustomer'.ID_Customer" in output
+    # Active relationships should NOT have isActive line (default is true)
+    assert "isActive" not in output
+
+
+def test_generate_relationships_tmdl_inactive_relationship() -> None:
+    """Relationships TMDL with inactive relationship contains isActive: false."""
+    rel = make_relationship(
+        "dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer", is_active=False
+    )
+    output = generate_relationships_tmdl([rel])
+
+    assert "isActive: false" in output
+
+
+def test_generate_relationships_tmdl_multiple_relationships_sorted() -> None:
+    """Relationships TMDL sorts relationships: active first, then by table/column names."""
+    rel1 = make_relationship(
+        "dbo.FactSales", "ID_Product", "dbo.DimProduct", "ID_Product", is_active=False
+    )
+    rel2 = make_relationship(
+        "dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer", is_active=True
+    )
+    rel3 = make_relationship(
+        "dbo.FactSales", "ID_Store", "dbo.DimStore", "ID_Store", is_active=True
+    )
+
+    output = generate_relationships_tmdl([rel1, rel2, rel3])
+
+    # Find positions
+    pos_customer = output.find(f"relationship {rel2.id}")
+    pos_store = output.find(f"relationship {rel3.id}")
+    pos_product = output.find(f"relationship {rel1.id}")
+
+    # Active relationships (rel2, rel3) should appear before inactive (rel1)
+    assert pos_customer < pos_product
+    assert pos_store < pos_product
+
+    # Within active, sorted by (from_table, from_column, to_table, to_column)
+    # ID_Customer comes before ID_Store alphabetically
+    assert pos_customer < pos_store
+
+
+def test_generate_relationships_tmdl_empty_list() -> None:
+    """Relationships TMDL with empty list returns empty string."""
+    output = generate_relationships_tmdl([])
+    assert output == ""
+
+
+def test_generate_relationships_tmdl_quotes_special_characters() -> None:
+    """Relationships TMDL quotes table names with special characters."""
+    rel = make_relationship("dbo.Fact Sales", "ID_Customer", "dbo.Dim Customer", "ID_Customer")
+    output = generate_relationships_tmdl([rel])
+
+    # Table names with spaces should be quoted
+    assert "'Fact Sales'.ID_Customer" in output
+    assert "'Dim Customer'.ID_Customer" in output
+
+
+def test_generate_relationships_tmdl_passes_whitespace_validation() -> None:
+    """Relationships TMDL passes whitespace validation."""
+    rel = make_relationship("dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer")
+    output = generate_relationships_tmdl([rel])
+
+    errors = validate_tmdl_indentation(output)
+    assert len(errors) == 0, f"Validation errors: {errors}"
+
+
+# generate_all_tmdl tests
+def test_generate_all_tmdl_returns_all_required_file_paths() -> None:
+    """generate_all_tmdl returns dict with all required file paths."""
+    dim_table = make_table("dbo", "DimCustomer", [make_column("ID_Customer", ordinal=1)])
+    fact_table = make_table("dbo", "FactSales", [make_column("ID_Customer", ordinal=1)])
+    tables = [dim_table, fact_table]
+    classifications = {
+        ("dbo", "DimCustomer"): TableClassification.DIMENSION,
+        ("dbo", "FactSales"): TableClassification.FACT,
+    }
+    rel = make_relationship("dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer")
+    relationships = [rel]
+
+    result = generate_all_tmdl(
+        model_name="TestModel",
+        tables=tables,
+        classifications=classifications,
+        relationships=relationships,
+        key_prefixes=["ID_"],
+        catalog_name="my_warehouse",
+    )
+
+    # Check all required file paths are present
+    assert ".platform" in result
+    assert "definition.pbism" in result
+    assert "definition/database.tmdl" in result
+    assert "definition/model.tmdl" in result
+    assert "definition/expressions.tmdl" in result
+    assert "definition/relationships.tmdl" in result
+    assert "definition/tables/DimCustomer.tmdl" in result
+    assert "definition/tables/FactSales.tmdl" in result
+    assert "diagramLayout.json" in result
+
+
+def test_generate_all_tmdl_all_tmdl_files_pass_validation() -> None:
+    """generate_all_tmdl produces TMDL files that pass whitespace validation."""
+    dim_table = make_table("dbo", "DimCustomer", [make_column("ID_Customer", ordinal=1)])
+    tables = [dim_table]
+    classifications = {("dbo", "DimCustomer"): TableClassification.DIMENSION}
+
+    result = generate_all_tmdl(
+        model_name="TestModel",
+        tables=tables,
+        classifications=classifications,
+        relationships=[],
+        key_prefixes=["ID_"],
+        catalog_name="my_warehouse",
+    )
+
+    # Validate all TMDL files
+    for path, content in result.items():
+        if path.endswith(".tmdl"):
+            errors = validate_tmdl_indentation(content)
+            assert len(errors) == 0, f"{path} has indentation errors: {errors}"
+
+
+def test_generate_all_tmdl_json_files_are_valid_json() -> None:
+    """generate_all_tmdl produces valid JSON for .platform, definition.pbism, diagramLayout.json."""
+    dim_table = make_table("dbo", "DimCustomer", [make_column("ID_Customer", ordinal=1)])
+    tables = [dim_table]
+    classifications = {("dbo", "DimCustomer"): TableClassification.DIMENSION}
+
+    result = generate_all_tmdl(
+        model_name="TestModel",
+        tables=tables,
+        classifications=classifications,
+        relationships=[],
+        key_prefixes=["ID_"],
+        catalog_name="my_warehouse",
+    )
+
+    # Validate JSON files
+    json_files = [".platform", "definition.pbism", "diagramLayout.json"]
+    for json_file in json_files:
+        content = result[json_file]
+        try:
+            json.loads(content)
+        except json.JSONDecodeError as e:
+            raise AssertionError(f"{json_file} is not valid JSON: {e}") from e
+
+
+def test_generate_all_tmdl_is_deterministic() -> None:
+    """generate_all_tmdl produces identical output for same inputs."""
+    dim_table = make_table("dbo", "DimCustomer", [make_column("ID_Customer", ordinal=1)])
+    fact_table = make_table("dbo", "FactSales", [make_column("ID_Customer", ordinal=1)])
+    tables = [dim_table, fact_table]
+    classifications = {
+        ("dbo", "DimCustomer"): TableClassification.DIMENSION,
+        ("dbo", "FactSales"): TableClassification.FACT,
+    }
+    rel = make_relationship("dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer")
+    relationships = [rel]
+
+    result1 = generate_all_tmdl(
+        model_name="TestModel",
+        tables=tables,
+        classifications=classifications,
+        relationships=relationships,
+        key_prefixes=["ID_"],
+        catalog_name="my_warehouse",
+    )
+
+    result2 = generate_all_tmdl(
+        model_name="TestModel",
+        tables=tables,
+        classifications=classifications,
+        relationships=relationships,
+        key_prefixes=["ID_"],
+        catalog_name="my_warehouse",
+    )
+
+    # Compare all keys and values
+    assert result1.keys() == result2.keys()
+    for key in result1.keys():
+        assert result1[key] == result2[key], f"Mismatch in {key}"
+
+
+def test_generate_all_tmdl_with_two_dimensions_and_one_fact() -> None:
+    """generate_all_tmdl handles multiple dimensions and facts."""
+    dim_customer = make_table("dbo", "DimCustomer", [make_column("ID_Customer", ordinal=1)])
+    dim_product = make_table("dbo", "DimProduct", [make_column("ID_Product", ordinal=1)])
+    fact_sales = make_table(
+        "dbo",
+        "FactSales",
+        [
+            make_column("ID_Customer", ordinal=1),
+            make_column("ID_Product", ordinal=2),
+        ],
+    )
+    tables = [dim_customer, dim_product, fact_sales]
+    classifications = {
+        ("dbo", "DimCustomer"): TableClassification.DIMENSION,
+        ("dbo", "DimProduct"): TableClassification.DIMENSION,
+        ("dbo", "FactSales"): TableClassification.FACT,
+    }
+    rel1 = make_relationship("dbo.FactSales", "ID_Customer", "dbo.DimCustomer", "ID_Customer")
+    rel2 = make_relationship("dbo.FactSales", "ID_Product", "dbo.DimProduct", "ID_Product")
+    relationships = [rel1, rel2]
+
+    result = generate_all_tmdl(
+        model_name="TestModel",
+        tables=tables,
+        classifications=classifications,
+        relationships=relationships,
+        key_prefixes=["ID_"],
+        catalog_name="my_warehouse",
+    )
+
+    # Should have table files for all three tables
+    assert "definition/tables/DimCustomer.tmdl" in result
+    assert "definition/tables/DimProduct.tmdl" in result
+    assert "definition/tables/FactSales.tmdl" in result
+
+    # Should have two relationships in relationships.tmdl
+    relationships_content = result["definition/relationships.tmdl"]
+    assert f"relationship {rel1.id}" in relationships_content
+    assert f"relationship {rel2.id}" in relationships_content

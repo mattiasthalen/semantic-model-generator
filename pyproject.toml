@@ -28,6 +28,7 @@ select = ["E", "W", "F", "I", "B", "C4", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]
+"src/semantic_model_generator/_version.py" = ["E", "W", "F", "I", "B", "C4", "UP"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -41,6 +42,10 @@ warn_unused_configs = true
 [[tool.mypy.overrides]]
 module = ["notebookutils.*", "mssql.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "semantic_model_generator._version"
+allow_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

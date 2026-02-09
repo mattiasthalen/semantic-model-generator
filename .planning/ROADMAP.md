@@ -65,10 +65,11 @@ Plans:
   3. Views are excluded from discovery (only BASE TABLE rows from INFORMATION_SCHEMA.TABLES)
   4. Tables can be filtered by include list, exclude list, or both
   5. Tables with exactly 1 key column (matching user-supplied prefixes) are classified as dimensions; tables with 2+ key columns are classified as facts
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: Warehouse connection, INFORMATION_SCHEMA reader, view filtering, table filtering, fact/dimension classifier
+- [ ] 03-01-PLAN.md -- Table filtering (include/exclude lists) and fact/dimension classification (key column counting) via TDD
+- [ ] 03-02-PLAN.md -- Warehouse connection factory (pyodbc + token auth) and INFORMATION_SCHEMA discovery with view filtering via TDD
 
 ### Phase 4: Relationship Inference
 **Goal**: Given classified schema metadata and key prefixes, the library infers star-schema relationships between facts and dimensions, correctly handling role-playing dimensions and exact-match bypass
@@ -154,7 +155,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|---------------|--------|-----------|
 | 1. Project Foundation & Build System | 1/1 | ✓ Complete | 2026-02-09 |
 | 2. Domain Types & Core Utilities | 2/2 | ✓ Complete | 2026-02-09 |
-| 3. Schema Discovery & Classification | 0/1 | Not started | - |
+| 3. Schema Discovery & Classification | 0/2 | Not started | - |
 | 4. Relationship Inference | 0/1 | Not started | - |
 | 5. TMDL Generation | 0/2 | Not started | - |
 | 6. Output Layer | 0/1 | Not started | - |

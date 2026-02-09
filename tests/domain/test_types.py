@@ -4,6 +4,7 @@ import dataclasses
 from enum import StrEnum
 
 import pytest
+
 from semantic_model_generator.domain.types import ColumnMetadata, TableMetadata, TmdlDataType
 
 

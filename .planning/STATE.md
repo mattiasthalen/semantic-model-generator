@@ -5,17 +5,17 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 4 - Relationship Inference
+**Current focus:** Phase 5 - TMDL Generation
 
 ## Current Position
 
-Phase: 4 of 8 (Relationship Inference)
-Plan: 1 of 1 in current phase
-Status: Complete
+Phase: 5 of 8 (TMDL Generation)
+Plan: Next phase ready to start
+Status: Ready to plan
 Branch: gsd/phase-04-relationship-inference
-Last activity: 2026-02-09 -- Phase 4 Plan 1 complete (relationship inference)
+Last activity: 2026-02-09 -- Phase 4 complete with critical bug fix (startswith matching vs prefix stripping)
 
-Progress: [████░░░░░░] 100.0% (Phase 4 complete - all 1 plans executed)
+Progress: [████████░░] 50.0% (4 of 8 phases complete)
 
 ## Performance Metrics
 
@@ -73,6 +73,10 @@ Recent decisions affecting current work:
 - [03-03]: Use mssql-python instead of pyodbc (Microsoft's official GA driver, DDBC with no ODBC Manager dependency)
 - [03-03]: Use ActiveDirectoryDefault authentication in connection string (driver handles DefaultAzureCredential internally)
 - [03-03]: Install Linux system libraries (libltdl7, libkrb5-3, libgssapi-krb5-2) for mssql-python support
+- [04-01]: **CRITICAL FIX**: Relationship matching uses startswith() on full column names (no prefix stripping)
+- [04-01]: Both fact and dimension use same prefix (e.g., ID_Customer in both; role-playing: ID_Customer_BillTo)
+- [04-01]: Role-playing requires underscore boundary validation (prevents CustomerRegion matching Customer)
+- [04-01]: Exact-match columns (name equals prefix) produce no relationships and are excluded from grouping
 - [04-01]: Role-playing match requires underscore boundary after dimension base name (prevents false positives)
 - [04-01]: Exact-match columns (name equals prefix) produce no relationships and are excluded from role-playing grouping
 - [04-01]: First relationship by sorted from_column is active, rest inactive for role-playing dimensions
@@ -91,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 04-01-PLAN.md (relationship inference) - Phase 4 complete (all 1 plans executed)
-Resume file: .planning/phases/04-relationship-inference/04-01-SUMMARY.md
+Stopped at: Phase 4 complete with critical bug fix (startswith matching vs prefix stripping) - ready for Phase 5
+Resume file: .planning/phases/04-relationship-inference/04-VERIFICATION.md

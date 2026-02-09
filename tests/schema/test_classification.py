@@ -1,12 +1,11 @@
 """Tests for table classification by key column count."""
 
-from semantic_model_generator.schema.classification import classify_table, classify_tables
-
 from semantic_model_generator.domain.types import (
     ColumnMetadata,
     TableClassification,
     TableMetadata,
 )
+from semantic_model_generator.schema.classification import classify_table, classify_tables
 
 
 # Helper function to create column metadata

@@ -51,6 +51,8 @@ Recent decisions affecting current work:
 - [01-01]: Install dev tools separately rather than as optional-dependencies to keep build-system.requires minimal
 - [01-01]: Ignore all ruff rules for auto-generated _version.py (uses deprecated typing syntax)
 - [01-01]: Exclude .references, .claude, .planning from pre-commit hooks (reference materials, not source code)
+- [02-plan]: All phase work (research, plans, code) must be committed on phase branch, never main
+- [02-plan]: Version tags (v0.1.0 etc.) created only at milestone completion, not per-phase
 
 ### Pending Todos
 

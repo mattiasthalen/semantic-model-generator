@@ -74,6 +74,8 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 - **Style**: Functional programming, no classes unless strictly necessary
 - **Quality**: TDD mandatory, linting + type checking enforced via pre-commit
 - **Versioning**: Dynamic from git tags (e.g., setuptools-scm or similar)
+- **Branching**: Per-phase branches (`gsd/phase-{N}-{slug}`). ALL phase work — including research, plans, and code — must be committed on the phase branch, never on main. The phase branch is created from main before any phase work begins and merged back upon phase completion.
+- **Tagging**: Version tags (e.g., `v0.1.0`) are created only upon milestone completion, not on individual phase merges. The initial `v0.0.1` tag exists solely for hatchling VCS version derivation.
 
 ## Key Decisions
 
@@ -88,6 +90,8 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 | Key prefixes user-supplied, no defaults | Different warehouses use different key conventions | — Pending |
 | Include/exclude table filtering | Both whitelist and blacklist supported | — Pending |
 | Dev/prod deployment modes | Dev = new model + UTC suffix (safe iteration), Prod = overwrite with explicit confirm (no interactive prompts in notebooks) | — Pending |
+| Per-phase branching | All phase work (research, plans, code) on `gsd/phase-{N}-{slug}`, merged to main on completion | Enforced |
+| Tags on milestone completion only | Version tags created at milestone completion, not per-phase; v0.0.1 exists for hatchling VCS bootstrap only | Enforced |
 
 ---
 *Last updated: 2026-02-09 after research phase*

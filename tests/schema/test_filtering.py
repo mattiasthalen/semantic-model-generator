@@ -1,9 +1,9 @@
 """Tests for table filtering by include and exclude lists."""
 
 import pytest
-from semantic_model_generator.schema.filtering import filter_tables
 
 from semantic_model_generator.domain.types import ColumnMetadata, TableMetadata
+from semantic_model_generator.schema.filtering import filter_tables
 
 
 @pytest.fixture

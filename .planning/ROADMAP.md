@@ -80,10 +80,10 @@ Plans:
   2. Role-playing dimensions are detected when the same dimension is referenced multiple times from a single fact with different key column prefixes
   3. The first role-playing relationship is marked active; subsequent relationships to the same dimension are marked inactive
   4. Exact-match prefixes bypass role-playing detection (the key column name matches a prefix exactly, no suffix stripping)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 04-01: Key matching, relationship inference, role-playing dimension detection, active/inactive marking, exact-match bypass
+- [ ] 04-01-PLAN.md -- Relationship dataclass, key matching, relationship inference, role-playing dimension detection, active/inactive marking, exact-match bypass (TDD)
 
 ### Phase 5: TMDL Generation
 **Goal**: Library generates a complete, syntactically correct TMDL folder structure from schema metadata and inferred relationships, with deterministic output suitable for Git version control

@@ -97,11 +97,11 @@ Plans:
   4. Diagram layout JSON is generated positioning tables visually
   5. Regenerating from the same input produces byte-identical output (deterministic sorting of all collections)
   6. Expression locale is configurable (defaults to English, not hardcoded Swedish)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: Template functions for database.tmdl, model.tmdl, expressions.tmdl
-- [ ] 05-02: Table TMDL generation with DirectLake partitions, relationships.tmdl, metadata files, diagram layout
+- [ ] 05-01-PLAN.md -- Core TMDL generation: database.tmdl, model.tmdl, expressions.tmdl, column/partition/table generation with DirectLake partitions (TDD)
+- [ ] 05-02-PLAN.md -- Relationships TMDL, metadata files (.platform, definition.pbism, diagramLayout.json), and generate_all_tmdl orchestrator (TDD)
 
 ### Phase 6: Output Layer
 **Goal**: Generated TMDL can be written to a folder on disk, with watermark-based detection that preserves manually-maintained files from being overwritten

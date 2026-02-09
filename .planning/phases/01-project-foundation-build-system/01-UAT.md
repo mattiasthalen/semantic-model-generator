@@ -53,11 +53,16 @@ skipped: 0
 ## Gaps
 
 - truth: "Pre-commit hooks pass cleanly on committed codebase"
-  status: failed
+  status: diagnosed
   reason: "User reported: ruff format hook Failed — 1 file reformatted, 4 files left unchanged. Hook modified files instead of passing cleanly."
   severity: major
   test: 6
-  root_cause: ""
-  artifacts: []
+  root_cause: "ruff-format reformatted .references/Semantic Model Generator.ipynb (minified JSON notebook). Already fixed in commit 78d519f by adding exclude pattern for .references/, .claude/, .planning/ directories."
+  artifacts:
+    - path: ".pre-commit-config.yaml"
+      issue: "Exclude pattern was missing at commit 93d69bc, added in 78d519f"
+    - path: ".references/Semantic Model Generator.ipynb"
+      issue: "Minified notebook JSON gets reformatted by ruff-format when not excluded"
   missing: []
-  debug_session: ""
+  debug_session: ".planning/debug/ruff-format-hook-failure.md"
+  resolution: "Already fixed — no action needed"

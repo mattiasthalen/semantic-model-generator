@@ -8,13 +8,13 @@ per REQ-29.
 from collections import defaultdict
 from collections.abc import Sequence
 
-import pyodbc
+import mssql_python
 
 from semantic_model_generator.domain.types import ColumnMetadata, TableMetadata
 
 
 def discover_tables(
-    conn: pyodbc.Connection,
+    conn: mssql_python.Connection,
     schemas: Sequence[str],
 ) -> tuple[TableMetadata, ...]:
     """Discover BASE TABLEs and columns for specified schemas.
@@ -23,7 +23,7 @@ def discover_tables(
     TABLE_TYPE = 'BASE TABLE' to exclude views (REQ-29).
 
     Args:
-        conn: Authenticated pyodbc connection to Fabric warehouse
+        conn: Authenticated mssql_python connection to Fabric warehouse
         schemas: Schema names to discover (e.g., ["dbo", "staging"])
 
     Returns:

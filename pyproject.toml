@@ -9,7 +9,7 @@ description = "Generate TMDL semantic models from Fabric warehouse metadata"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
-    "pyodbc>=5.0",
+    "mssql-python>=1.0.0",
     "azure-identity>=1.19",
     "tenacity>=9.0",
 ]
@@ -48,7 +48,7 @@ module = ["notebookutils.*", "mssql.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["pyodbc", "azure.*"]
+module = ["mssql_python", "azure.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

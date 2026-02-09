@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "semantic-model-generator"
+dynamic = ["version"]
+description = "Generate TMDL semantic models from Fabric warehouse metadata"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = []
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/semantic_model_generator/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/semantic_model_generator"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["notebookutils.*", "mssql.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib", "--strict-markers", "-ra"]
+
+[tool.coverage.run]
+source = ["semantic_model_generator"]
+omit = ["tests/*", "src/semantic_model_generator/_version.py"]

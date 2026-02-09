@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 5 of 8 (TMDL Generation)
-Plan: 1 of ? complete
-Status: In progress
+Plan: 2 of 2 complete
+Status: Complete
 Branch: gsd/phase-05-tmdl-generation
-Last activity: 2026-02-09 -- Completed 05-01: Core TMDL generation functions
+Last activity: 2026-02-09 -- Completed 05-02: Relationships TMDL, metadata files, and orchestrator
 
 Progress: [████████░░] 50.0% (4 of 8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 4.9 min
-- Total execution time: 1.01 hours
+- Total plans completed: 9
+- Average duration: 5.1 min
+- Total execution time: 1.13 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [████████░░] 50.0% (4 of 8 phases complete)
 | 02 | 2 | 670s | 335s |
 | 03 | 3 | 879s | 293s |
 | 04 | 1 | 250s | 250s |
-| 05 | 1 | 311s | 311s |
+| 05 | 2 | 712s | 356s |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (336s), 03-03 (272s), 04-01 (250s), 05-01 (311s)
-- Trend: Phase 5 plan at 5.2 min, TDD implementation with comprehensive testing
+- Last 5 plans: 03-03 (272s), 04-01 (250s), 05-01 (311s), 05-02 (401s)
+- Trend: Phase 5 complete at 6.7 min average, TDD implementation with comprehensive testing
 
 *Updated after each plan completion*
 
@@ -89,6 +89,12 @@ Recent decisions affecting current work:
 - [05-01]: Validate all generated TMDL with whitespace validator before returning
 - [05-01]: DirectLake expression URL is empty string (runtime resolution in Phase 7/8)
 - [05-01]: All TMDL generation functions compose from existing Phase 2 utilities
+- [05-02]: Relationship fromColumn/toColumn: table names always single-quoted, columns unquoted ('TableName'.ColumnName)
+- [05-02]: Active relationships omit isActive property (default true), inactive include isActive: false
+- [05-02]: Relationships sorted: active first, then by (from_table, from_column, to_table, to_column)
+- [05-02]: definition.pbism includes model name, description, version, author, timestamps per user requirement
+- [05-02]: Diagram layout: facts vertical column, dimensions horizontal row(s), deterministic positioning
+- [05-02]: generate_all_tmdl uses fixed timestamp for deterministic output (production uses actual time)
 
 ### Pending Todos
 
@@ -103,5 +109,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 05-01-PLAN.md - Core TMDL generation functions with TDD
-Resume file: .planning/phases/05-tmdl-generation/05-01-SUMMARY.md
+Stopped at: Completed 05-02-PLAN.md - Relationships TMDL, metadata files, and orchestrator. Phase 5 complete.
+Resume file: .planning/phases/05-tmdl-generation/05-02-SUMMARY.md

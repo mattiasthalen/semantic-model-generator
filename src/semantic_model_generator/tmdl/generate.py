@@ -285,7 +285,55 @@ def generate_relationships_tmdl(relationships: Sequence[Relationship]) -> str:
     Returns:
         TMDL relationships definitions with active/inactive, fromColumn, toColumn.
     """
-    raise NotImplementedError("Task 1: RED - to be implemented in Task 2")
+    if not relationships:
+        return ""
+
+    indent1 = indent_tmdl(1)
+
+    # Sort relationships: active first (is_active=True), then by table/column names
+    def sort_key(rel: Relationship) -> tuple[bool, str, str, str, str]:
+        # Primary sort: active (False) before inactive (True) - inverted bool for sorting
+        # Secondary sort: (from_table, from_column, to_table, to_column)
+        return (not rel.is_active, rel.from_table, rel.from_column, rel.to_table, rel.to_column)
+
+    sorted_relationships = sorted(relationships, key=sort_key)
+
+    # Build relationship sections
+    sections = []
+    for rel in sorted_relationships:
+        # Extract table name from schema-qualified "schema.table"
+        from_table_name = rel.from_table.split(".", 1)[-1]
+        to_table_name = rel.to_table.split(".", 1)[-1]
+
+        # Per TMDL relationship syntax: table names are ALWAYS single-quoted
+        # Format: 'TableName'.ColumnName (table always quoted, column not quoted)
+        # Escape internal single quotes by doubling them if present
+        from_table_escaped = from_table_name.replace("'", "''")
+        to_table_escaped = to_table_name.replace("'", "''")
+
+        lines = [f"relationship {rel.id}"]
+
+        # Add isActive: false only for inactive relationships
+        if not rel.is_active:
+            lines.append(f"{indent1}isActive: false")
+
+        # Add fromColumn and toColumn with always-quoted table names
+        lines.append(f"{indent1}fromColumn: '{from_table_escaped}'.{rel.from_column}")
+        lines.append(f"{indent1}toColumn: '{to_table_escaped}'.{rel.to_column}")
+
+        sections.append("\n".join(lines))
+
+    # Join all sections with blank line separator
+    content = "\n\n".join(sections) + "\n"
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated relationships.tmdl has indentation errors:\n{error_text}")
+
+    return content
 
 
 def generate_all_tmdl(
@@ -313,4 +361,59 @@ def generate_all_tmdl(
         "definition/relationships.tmdl", "definition/tables/Customer.tmdl",
         "diagramLayout.json"
     """
-    raise NotImplementedError("Task 1: RED - to be implemented in Task 2")
+    # Import metadata generators
+    from semantic_model_generator.tmdl.metadata import (
+        generate_definition_pbism_json,
+        generate_diagram_layout_json,
+        generate_platform_json,
+    )
+
+    # Sort tables: dimensions first, then facts, within each by (schema, table)
+    def sort_key(table: TableMetadata) -> tuple[int, str, str]:
+        classification = classifications.get(
+            (table.schema_name, table.table_name), TableClassification.UNCLASSIFIED
+        )
+        classification_order = {
+            TableClassification.DIMENSION: 0,
+            TableClassification.FACT: 1,
+            TableClassification.UNCLASSIFIED: 2,
+        }
+        return (classification_order[classification], table.schema_name, table.table_name)
+
+    sorted_tables = sorted(tables, key=sort_key)
+
+    # Build qualified table names for model.tmdl
+    table_qualified_names = [f"{t.schema_name}.{t.table_name}" for t in sorted_tables]
+
+    # Build the output dict
+    output: dict[str, str] = {}
+
+    # Metadata files
+    output[".platform"] = generate_platform_json(model_name)
+    # Use a fixed timestamp for deterministic output
+    # In production, this would be the actual generation time
+    fixed_timestamp = "2024-01-01T00:00:00+00:00"
+    output["definition.pbism"] = generate_definition_pbism_json(
+        model_name, timestamp=fixed_timestamp
+    )
+
+    # TMDL definition files
+    output["definition/database.tmdl"] = generate_database_tmdl()
+    output["definition/model.tmdl"] = generate_model_tmdl(
+        model_name, table_qualified_names, classifications
+    )
+    output["definition/expressions.tmdl"] = generate_expressions_tmdl(catalog_name)
+    output["definition/relationships.tmdl"] = generate_relationships_tmdl(relationships)
+
+    # Table files
+    for table in sorted_tables:
+        classification = classifications.get(
+            (table.schema_name, table.table_name), TableClassification.UNCLASSIFIED
+        )
+        table_path = f"definition/tables/{table.table_name}.tmdl"
+        output[table_path] = generate_table_tmdl(table, classification, key_prefixes, catalog_name)
+
+    # Diagram layout
+    output["diagramLayout.json"] = generate_diagram_layout_json(tables, classifications)
+
+    return output

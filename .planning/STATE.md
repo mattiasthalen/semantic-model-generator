@@ -10,30 +10,30 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 2 of 8 (Domain Types & Core Utilities)
-Plan: 1 of 2 in current phase
-Status: In progress
+Plan: 2 of 2 in current phase
+Status: Phase complete
 Branch: gsd/phase-02-domain-types-core-utilities
-Last activity: 2026-02-09 -- Phase 2 Plan 1 complete (domain types and type mapping)
+Last activity: 2026-02-09 -- Phase 2 Plan 2 complete (core utility functions)
 
-Progress: [██░░░░░░░░] 25%
+Progress: [███░░░░░░░] 37.5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 4.4 min
-- Total execution time: 0.15 hours
+- Total plans completed: 3
+- Average duration: 6.3 min
+- Total execution time: 0.31 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 1 | 268s | 268s |
-| 02 | 1 | 261s | 261s |
+| 02 | 2 | 670s | 335s |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (268s), 02-01 (261s)
-- Trend: Consistent velocity ~4.5 min/plan
+- Last 5 plans: 01-01 (268s), 02-01 (261s), 02-02 (409s)
+- Trend: Phase 2 plans ~5.6 min/plan avg
 
 *Updated after each plan completion*
 
@@ -58,6 +58,9 @@ Recent decisions affecting current work:
 - [02-01]: TmdlDataType enum values match TMDL spec exactly (int64, double, boolean, string, dateTime, decimal, binary)
 - [02-01]: Type mapping function normalizes input (lowercase, strip) for case-insensitive matching
 - [02-01]: ValueError with helpful message listing all supported types for unsupported SQL types
+- [02-02]: Use NamedTuple TmdlIndentationError instead of exception for composability in validation pipelines
+- [02-02]: Preserve object_name case in UUID generation (source systems may be case-sensitive)
+- [02-02]: Tab-only indentation validation (TMDL spec requires tabs, spaces are always wrong)
 
 ### Pending Todos
 
@@ -72,5 +75,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 02-01-PLAN.md (domain types and type mapping)
-Resume file: .planning/phases/02-domain-types-core-utilities/02-01-SUMMARY.md
+Stopped at: Completed 02-02-PLAN.md (core utility functions)
+Resume file: .planning/phases/02-domain-types-core-utilities/02-02-SUMMARY.md

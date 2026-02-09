@@ -20,6 +20,14 @@ class TmdlDataType(StrEnum):
     BINARY = "binary"
 
 
+class TableClassification(StrEnum):
+    """Classification of a warehouse table in star schema."""
+
+    DIMENSION = "dimension"
+    FACT = "fact"
+    UNCLASSIFIED = "unclassified"
+
+
 @dataclass(frozen=True, slots=True)
 class ColumnMetadata:
     """Immutable metadata for a warehouse column."""

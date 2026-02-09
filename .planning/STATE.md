@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 2 - Domain Types & Core Utilities
+**Current focus:** Phase 3 - Schema Discovery & Classification
 
 ## Current Position
 
-Phase: 2 of 8 (Domain Types & Core Utilities)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Branch: gsd/phase-02-domain-types-core-utilities
-Last activity: 2026-02-09 -- Phase 2 Plan 2 complete (core utility functions)
+Phase: 3 of 8 (Schema Discovery & Classification)
+Plan: 1 of 3 in current phase
+Status: In progress
+Branch: gsd/phase-03-schema-discovery-classification
+Last activity: 2026-02-09 -- Phase 3 Plan 1 complete (table filtering and classification)
 
-Progress: [███░░░░░░░] 37.5%
+Progress: [████░░░░░░] 50.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 6.3 min
-- Total execution time: 0.31 hours
+- Total plans completed: 4
+- Average duration: 5.5 min
+- Total execution time: 0.52 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [███░░░░░░░] 37.5%
 |-------|-------|-------|----------|
 | 01 | 1 | 268s | 268s |
 | 02 | 2 | 670s | 335s |
+| 03 | 1 | 271s | 271s |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (268s), 02-01 (261s), 02-02 (409s)
-- Trend: Phase 2 plans ~5.6 min/plan avg
+- Last 5 plans: 01-01 (268s), 02-01 (261s), 02-02 (409s), 03-01 (271s)
+- Trend: Phase 3 started strong at 4.5 min (faster than Phase 2 avg)
 
 *Updated after each plan completion*
 
@@ -61,6 +62,10 @@ Recent decisions affecting current work:
 - [02-02]: Use NamedTuple TmdlIndentationError instead of exception for composability in validation pipelines
 - [02-02]: Preserve object_name case in UUID generation (source systems may be case-sensitive)
 - [02-02]: Tab-only indentation validation (TMDL spec requires tabs, spaces are always wrong)
+- [03-01]: Case-sensitive exact name matching for table filtering (not pattern/glob matching)
+- [03-01]: Include filter applied first, then exclude filter
+- [03-01]: Key prefix matching is case-sensitive using startswith() for consistency
+- [03-01]: Batch classification returns (schema_name, table_name) tuple keys for multi-schema uniqueness
 
 ### Pending Todos
 
@@ -75,5 +80,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 02-02-PLAN.md (core utility functions)
-Resume file: .planning/phases/02-domain-types-core-utilities/02-02-SUMMARY.md
+Stopped at: Completed 03-01-PLAN.md (table filtering and classification)
+Resume file: .planning/phases/03-schema-discovery-classification/03-01-SUMMARY.md

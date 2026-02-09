@@ -1,12 +1,12 @@
 """Tests for SQL-to-TMDL type mapping."""
 
 import pytest
+
+from semantic_model_generator.domain.types import TmdlDataType
 from semantic_model_generator.utils.type_mapping import (
     SQL_TO_TMDL_TYPE,
     map_sql_type_to_tmdl,
 )
-
-from semantic_model_generator.domain.types import TmdlDataType
 
 
 class TestExactMappings:

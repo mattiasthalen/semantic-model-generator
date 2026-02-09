@@ -13,7 +13,7 @@ Build a Python library (PyPI package) that generates TMDL semantic models from M
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Project Foundation & Build System** - Toolchain, package structure, quality gates
-- [ ] **Phase 2: Domain Types & Core Utilities** - Immutable data types, deterministic UUIDs, type mapping, validation helpers
+- [x] **Phase 2: Domain Types & Core Utilities** - Immutable data types, deterministic UUIDs, type mapping, validation helpers
 - [ ] **Phase 3: Schema Discovery & Classification** - Warehouse connectivity, INFORMATION_SCHEMA reading, table filtering, fact/dimension classification
 - [ ] **Phase 4: Relationship Inference** - Key matching, role-playing dimensions, active/inactive marking
 - [ ] **Phase 5: TMDL Generation** - Template functions for all TMDL file types, deterministic sorted output
@@ -52,8 +52,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Domain types (frozen dataclasses, TmdlDataType enum) and SQL-to-TMDL type mapping (TDD)
-- [ ] 02-02-PLAN.md -- Deterministic UUID generation, identifier quoting, whitespace validation (TDD)
+- [x] 02-01-PLAN.md -- Domain types (frozen dataclasses, TmdlDataType enum) and SQL-to-TMDL type mapping (TDD)
+- [x] 02-02-PLAN.md -- Deterministic UUID generation, identifier quoting, whitespace validation (TDD)
 
 ### Phase 3: Schema Discovery & Classification
 **Goal**: Library can connect to a Fabric warehouse, read its schema metadata, filter to the requested tables, and classify each as dimension or fact based on key column count
@@ -153,7 +153,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Project Foundation & Build System | 1/1 | ✓ Complete | 2026-02-09 |
-| 2. Domain Types & Core Utilities | 0/2 | Not started | - |
+| 2. Domain Types & Core Utilities | 2/2 | ✓ Complete | 2026-02-09 |
 | 3. Schema Discovery & Classification | 0/1 | Not started | - |
 | 4. Relationship Inference | 0/1 | Not started | - |
 | 5. TMDL Generation | 0/2 | Not started | - |

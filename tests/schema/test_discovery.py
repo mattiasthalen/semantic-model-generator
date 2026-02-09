@@ -1,4 +1,9 @@
-"""Tests for schema discovery from INFORMATION_SCHEMA."""
+"""Tests for schema discovery from INFORMATION_SCHEMA.
+
+Note: Tests use Mock objects for connection and cursor, which are compatible
+with both pyodbc and mssql_python via duck typing. The cursor API (execute,
+fetchall, etc.) is the same for both drivers.
+"""
 
 from unittest.mock import Mock
 

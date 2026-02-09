@@ -47,6 +47,14 @@ def infer_relationships(
 ) -> tuple[Relationship, ...]:
     """Infer star-schema relationships between fact and dimension tables.
 
+    Matching is done by checking if fact column names START WITH dimension column names.
+    Both fact and dimension columns use the same key prefixes.
+
+    Example:
+        - Dimension column: ID_Customer
+        - Fact exact match: ID_Customer (same name)
+        - Fact role-playing: ID_Customer_BillTo (starts with ID_Customer)
+
     Args:
         tables: Sequence of table metadata.
         classifications: Dict mapping (schema, table) to TableClassification.
@@ -69,23 +77,25 @@ def infer_relationships(
         elif classification == TableClassification.DIMENSION:
             dimensions.append(table)
 
-    # Build dimension lookup: dim_base -> (qualified_name, key_column_name)
+    # Build dimension lookup: dim_column_name -> (qualified_name, key_column_name)
+    # We keep the full column name with prefix, NO stripping
     dim_lookup: dict[str, tuple[str, str]] = {}
 
     for dim in dimensions:
         # Find dimension's key column (should be exactly one)
+        # A key column is one that starts with any of the key prefixes
         dim_key_cols = [
-            col for col in dim.columns if strip_prefix(col.name, key_prefixes) is not None
+            col
+            for col in dim.columns
+            if any(col.name.startswith(prefix) for prefix in key_prefixes)
+            and not is_exact_match(col.name, key_prefixes)
         ]
 
         if len(dim_key_cols) == 1:
             dim_key_col = dim_key_cols[0]
-            dim_base = strip_prefix(dim_key_col.name, key_prefixes)
-
-            # Skip if exact match (empty base name)
-            if dim_base and not is_exact_match(dim_key_col.name, key_prefixes):
-                qualified_name = f"{dim.schema_name}.{dim.table_name}"
-                dim_lookup[dim_base] = (qualified_name, dim_key_col.name)
+            qualified_name = f"{dim.schema_name}.{dim.table_name}"
+            # Store the FULL column name, not stripped
+            dim_lookup[dim_key_col.name] = (qualified_name, dim_key_col.name)
 
     # Infer relationships from facts to dimensions
     relationships: list[Relationship] = []
@@ -93,9 +103,11 @@ def infer_relationships(
     for fact in facts:
         fact_qualified = f"{fact.schema_name}.{fact.table_name}"
 
-        # Get all key columns from fact
+        # Get all key columns from fact (columns starting with any key prefix)
         fact_key_cols = [
-            col for col in fact.columns if strip_prefix(col.name, key_prefixes) is not None
+            col
+            for col in fact.columns
+            if any(col.name.startswith(prefix) for prefix in key_prefixes)
         ]
 
         for fact_col in fact_key_cols:
@@ -103,48 +115,32 @@ def infer_relationships(
             if is_exact_match(fact_col.name, key_prefixes):
                 continue
 
-            fact_base = strip_prefix(fact_col.name, key_prefixes)
-            if fact_base is None:
-                continue
-
-            # Try exact base name match first
-            if fact_base in dim_lookup:
-                dim_qualified, dim_col = dim_lookup[fact_base]
-                rel_id = generate_deterministic_uuid(
-                    "relationship", f"{fact_qualified}.{fact_col.name}->{dim_qualified}.{dim_col}"
-                )
-                relationships.append(
-                    Relationship(
-                        id=rel_id,
-                        from_table=fact_qualified,
-                        from_column=fact_col.name,
-                        to_table=dim_qualified,
-                        to_column=dim_col,
-                        is_active=True,
-                    )
-                )
-            else:
-                # Try role-playing match: fact_base starts with dim_base
-                for dim_base, (dim_qualified, dim_col) in dim_lookup.items():
-                    # Check if fact_base starts with dim_base and has role suffix
-                    if fact_base.startswith(dim_base):
-                        # Verify the boundary: next char after dim_base should be underscore
-                        if len(fact_base) > len(dim_base) and fact_base[len(dim_base)] == "_":
-                            rel_id = generate_deterministic_uuid(
-                                "relationship",
-                                f"{fact_qualified}.{fact_col.name}->{dim_qualified}.{dim_col}",
+            # Check if fact column starts with any dimension column
+            # This handles both exact match and role-playing cases
+            for dim_col_name, (dim_qualified, dim_col) in dim_lookup.items():
+                if fact_col.name.startswith(dim_col_name):
+                    # For role-playing, require underscore boundary
+                    # If fact column equals dim column exactly, it's a direct match
+                    # If fact column is longer, next char must be underscore
+                    if fact_col.name == dim_col_name or (
+                        len(fact_col.name) > len(dim_col_name)
+                        and fact_col.name[len(dim_col_name)] == "_"
+                    ):
+                        rel_id = generate_deterministic_uuid(
+                            "relationship",
+                            f"{fact_qualified}.{fact_col.name}->{dim_qualified}.{dim_col}",
+                        )
+                        relationships.append(
+                            Relationship(
+                                id=rel_id,
+                                from_table=fact_qualified,
+                                from_column=fact_col.name,
+                                to_table=dim_qualified,
+                                to_column=dim_col,
+                                is_active=True,
                             )
-                            relationships.append(
-                                Relationship(
-                                    id=rel_id,
-                                    from_table=fact_qualified,
-                                    from_column=fact_col.name,
-                                    to_table=dim_qualified,
-                                    to_column=dim_col,
-                                    is_active=True,
-                                )
-                            )
-                            break  # Only match first dimension
+                        )
+                        break  # Only match first dimension
 
     # Apply role-playing detection: mark inactive relationships
     # Group by (from_table, to_table)

@@ -142,36 +142,36 @@ def test_is_exact_match_no_match_returns_false() -> None:
 
 # REQ-06: Basic relationship inference tests
 def test_single_relationship() -> None:
-    """One fact with one FK to one dimension creates one active relationship."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    fact = make_table("dbo", "FactSales", [make_column("FK_CustomerID", 1)])
+    """One fact with one key column to one dimension creates one active relationship."""
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    fact = make_table("dbo", "FactSales", [make_column("ID_Customer", 1)])
 
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
     assert len(result) == 1
     rel = result[0]
     assert rel.from_table == "dbo.FactSales"
-    assert rel.from_column == "FK_CustomerID"
+    assert rel.from_column == "ID_Customer"
     assert rel.to_table == "dbo.DimCustomer"
-    assert rel.to_column == "SK_CustomerID"
+    assert rel.to_column == "ID_Customer"
     assert rel.is_active is True
     assert rel.from_cardinality == "many"
     assert rel.to_cardinality == "one"
 
 
 def test_multiple_dimensions() -> None:
-    """Fact with two FKs to two dimensions creates two active relationships."""
-    dim_customer = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    dim_product = make_table("dbo", "DimProduct", [make_column("SK_ProductID", 1)])
+    """Fact with two key columns to two dimensions creates two active relationships."""
+    dim_customer = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    dim_product = make_table("dbo", "DimProduct", [make_column("ID_Product", 1)])
     fact = make_table(
         "dbo",
         "FactSales",
-        [make_column("FK_CustomerID", 1), make_column("FK_ProductID", 2)],
+        [make_column("ID_Customer", 1), make_column("ID_Product", 2)],
     )
 
     classifications = {
@@ -180,7 +180,7 @@ def test_multiple_dimensions() -> None:
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim_customer, dim_product, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim_customer, dim_product, fact], classifications, ["ID_"])
 
     assert len(result) == 2
     # Both should be active
@@ -189,72 +189,72 @@ def test_multiple_dimensions() -> None:
     # Check one relationship to each dimension
     from_columns = {rel.from_column for rel in result}
     to_tables = {rel.to_table for rel in result}
-    assert from_columns == {"FK_CustomerID", "FK_ProductID"}
+    assert from_columns == {"ID_Customer", "ID_Product"}
     assert to_tables == {"dbo.DimCustomer", "dbo.DimProduct"}
 
 
 def test_no_match_returns_empty() -> None:
     """Fact key that doesn't match any dimension returns empty tuple."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    fact = make_table("dbo", "FactSales", [make_column("FK_OrderID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    fact = make_table("dbo", "FactSales", [make_column("ID_Order", 1)])
 
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
     assert len(result) == 0
 
 
 def test_unclassified_ignored() -> None:
     """Unclassified tables produce no relationships."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    unclass = make_table("dbo", "SomeTable", [make_column("FK_CustomerID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    unclass = make_table("dbo", "SomeTable", [make_column("ID_Customer", 1)])
 
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
         ("dbo", "SomeTable"): TableClassification.UNCLASSIFIED,
     }
 
-    result = infer_relationships([dim, unclass], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, unclass], classifications, ["ID_"])
 
     assert len(result) == 0
 
 
 def test_empty_input() -> None:
     """Empty tables list returns empty tuple."""
-    result = infer_relationships([], {}, ["SK_", "FK_"])
+    result = infer_relationships([], {}, ["ID_"])
     assert result == ()
 
 
 def test_fact_to_fact_no_relationship() -> None:
     """Two facts don't create relationships between each other."""
-    fact1 = make_table("dbo", "FactSales", [make_column("FK_CustomerID", 1)])
-    fact2 = make_table("dbo", "FactOrders", [make_column("SK_CustomerID", 1)])
+    fact1 = make_table("dbo", "FactSales", [make_column("ID_Customer", 1)])
+    fact2 = make_table("dbo", "FactOrders", [make_column("ID_Customer", 1)])
 
     classifications = {
         ("dbo", "FactSales"): TableClassification.FACT,
         ("dbo", "FactOrders"): TableClassification.FACT,
     }
 
-    result = infer_relationships([fact1, fact2], classifications, ["SK_", "FK_"])
+    result = infer_relationships([fact1, fact2], classifications, ["ID_"])
 
     assert len(result) == 0
 
 
 def test_cross_schema_relationship() -> None:
     """Fact in one schema can match dimension in another schema."""
-    dim = make_table("dim", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    fact = make_table("fact", "FactSales", [make_column("FK_CustomerID", 1)])
+    dim = make_table("dim", "DimCustomer", [make_column("ID_Customer", 1)])
+    fact = make_table("fact", "FactSales", [make_column("ID_Customer", 1)])
 
     classifications = {
         ("dim", "DimCustomer"): TableClassification.DIMENSION,
         ("fact", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
     assert len(result) == 1
     rel = result[0]
@@ -264,14 +264,14 @@ def test_cross_schema_relationship() -> None:
 
 # REQ-07: Role-playing dimension tests
 def test_role_playing_detected() -> None:
-    """Multiple fact columns matching same dimension via base name matching."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
+    """Multiple fact columns matching same dimension via startswith matching."""
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
     fact = make_table(
         "dbo",
         "FactSales",
         [
-            make_column("FK_CustomerID", 1),
-            make_column("FK_CustomerID_BillTo", 2),
+            make_column("ID_Customer", 1),
+            make_column("ID_Customer_BillTo", 2),
         ],
     )
 
@@ -280,7 +280,7 @@ def test_role_playing_detected() -> None:
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
     # Should have 2 relationships to same dimension
     assert len(result) == 2
@@ -291,13 +291,13 @@ def test_role_playing_detected() -> None:
 # REQ-08: Active/inactive marking tests
 def test_first_role_playing_active_rest_inactive() -> None:
     """When role-playing detected, first (by sorted column name) is active, rest inactive."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
     fact = make_table(
         "dbo",
         "FactSales",
         [
-            make_column("FK_CustomerID_BillTo", 1),
-            make_column("FK_CustomerID", 2),  # Should be first when sorted
+            make_column("ID_Customer_BillTo", 1),
+            make_column("ID_Customer", 2),  # Should be first when sorted
         ],
     )
 
@@ -306,32 +306,32 @@ def test_first_role_playing_active_rest_inactive() -> None:
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
     assert len(result) == 2
 
     # Sort result by from_column to match deterministic output
     sorted_result = sorted(result, key=lambda r: r.from_column)
 
-    # FK_CustomerID comes before FK_CustomerID_BillTo alphabetically
-    assert sorted_result[0].from_column == "FK_CustomerID"
+    # ID_Customer comes before ID_Customer_BillTo alphabetically
+    assert sorted_result[0].from_column == "ID_Customer"
     assert sorted_result[0].is_active is True
 
-    assert sorted_result[1].from_column == "FK_CustomerID_BillTo"
+    assert sorted_result[1].from_column == "ID_Customer_BillTo"
     assert sorted_result[1].is_active is False
 
 
 def test_single_relationship_always_active() -> None:
     """Non-role-playing relationship is always active."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    fact = make_table("dbo", "FactSales", [make_column("FK_CustomerID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    fact = make_table("dbo", "FactSales", [make_column("ID_Customer", 1)])
 
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
     assert len(result) == 1
     assert result[0].is_active is True
@@ -339,14 +339,14 @@ def test_single_relationship_always_active() -> None:
 
 def test_deterministic_ordering() -> None:
     """Same inputs produce same active/inactive assignment."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
     fact = make_table(
         "dbo",
         "FactSales",
         [
-            make_column("FK_CustomerID_ShipTo", 1),
-            make_column("FK_CustomerID_BillTo", 2),
-            make_column("FK_CustomerID", 3),
+            make_column("ID_Customer_ShipTo", 1),
+            make_column("ID_Customer_BillTo", 2),
+            make_column("ID_Customer", 3),
         ],
     )
 
@@ -356,8 +356,8 @@ def test_deterministic_ordering() -> None:
     }
 
     # Run twice
-    result1 = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
-    result2 = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result1 = infer_relationships([dim, fact], classifications, ["ID_"])
+    result2 = infer_relationships([dim, fact], classifications, ["ID_"])
 
     # Results should be identical
     assert len(result1) == len(result2) == 3
@@ -369,32 +369,32 @@ def test_deterministic_ordering() -> None:
 
 # REQ-09: Exact-match bypass tests
 def test_exact_match_produces_no_relationship() -> None:
-    """Column named exactly as a prefix produces no relationship (empty base name)."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    fact = make_table("dbo", "FactSales", [make_column("FK_", 1), make_column("FK_CustomerID", 2)])
+    """Column named exactly as a prefix produces no relationship."""
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    fact = make_table("dbo", "FactSales", [make_column("ID_", 1), make_column("ID_Customer", 2)])
 
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
-    # Only FK_CustomerID should match, FK_ should be skipped
+    # Only ID_Customer should match, ID_ should be skipped
     assert len(result) == 1
-    assert result[0].from_column == "FK_CustomerID"
+    assert result[0].from_column == "ID_Customer"
 
 
 def test_exact_match_excluded_from_role_playing_grouping() -> None:
     """Exact-match column doesn't count in role-playing grouping."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
     fact = make_table(
         "dbo",
         "FactSales",
         [
-            make_column("FK_", 1),  # Exact match - excluded
-            make_column("FK_CustomerID", 2),
-            make_column("FK_CustomerID_BillTo", 3),
+            make_column("ID_", 1),  # Exact match - excluded
+            make_column("ID_Customer", 2),
+            make_column("ID_Customer_BillTo", 3),
         ],
     )
 
@@ -403,28 +403,28 @@ def test_exact_match_excluded_from_role_playing_grouping() -> None:
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim, fact], classifications, ["ID_"])
 
-    # Should have 2 relationships (FK_ excluded)
+    # Should have 2 relationships (ID_ excluded)
     assert len(result) == 2
 
     # First should be active, second inactive (role-playing pair)
     sorted_result = sorted(result, key=lambda r: r.from_column)
-    assert sorted_result[0].from_column == "FK_CustomerID"
+    assert sorted_result[0].from_column == "ID_Customer"
     assert sorted_result[0].is_active is True
-    assert sorted_result[1].from_column == "FK_CustomerID_BillTo"
+    assert sorted_result[1].from_column == "ID_Customer_BillTo"
     assert sorted_result[1].is_active is False
 
 
 # Deterministic output tests
 def test_relationships_sorted_deterministically() -> None:
     """Output tuple is sorted by (from_table, from_column, to_table, to_column)."""
-    dim1 = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    dim2 = make_table("dbo", "DimProduct", [make_column("SK_ProductID", 1)])
+    dim1 = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    dim2 = make_table("dbo", "DimProduct", [make_column("ID_Product", 1)])
     fact = make_table(
         "dbo",
         "FactSales",
-        [make_column("FK_ProductID", 1), make_column("FK_CustomerID", 2)],
+        [make_column("ID_Product", 1), make_column("ID_Customer", 2)],
     )
 
     classifications = {
@@ -433,19 +433,19 @@ def test_relationships_sorted_deterministically() -> None:
         ("dbo", "FactSales"): TableClassification.FACT,
     }
 
-    result = infer_relationships([dim1, dim2, fact], classifications, ["SK_", "FK_"])
+    result = infer_relationships([dim1, dim2, fact], classifications, ["ID_"])
 
     assert len(result) == 2
 
-    # Should be sorted by from_column (CustomerID < ProductID)
-    assert result[0].from_column == "FK_CustomerID"
-    assert result[1].from_column == "FK_ProductID"
+    # Should be sorted by from_column (Customer < Product)
+    assert result[0].from_column == "ID_Customer"
+    assert result[1].from_column == "ID_Product"
 
 
 def test_relationship_ids_are_deterministic() -> None:
     """Same inputs produce same UUID IDs via uuid_gen."""
-    dim = make_table("dbo", "DimCustomer", [make_column("SK_CustomerID", 1)])
-    fact = make_table("dbo", "FactSales", [make_column("FK_CustomerID", 1)])
+    dim = make_table("dbo", "DimCustomer", [make_column("ID_Customer", 1)])
+    fact = make_table("dbo", "FactSales", [make_column("ID_Customer", 1)])
 
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
@@ -453,8 +453,8 @@ def test_relationship_ids_are_deterministic() -> None:
     }
 
     # Run twice
-    result1 = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
-    result2 = infer_relationships([dim, fact], classifications, ["SK_", "FK_"])
+    result1 = infer_relationships([dim, fact], classifications, ["ID_"])
+    result2 = infer_relationships([dim, fact], classifications, ["ID_"])
 
     assert len(result1) == len(result2) == 1
     assert result1[0].id == result2[0].id

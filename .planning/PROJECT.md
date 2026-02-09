@@ -31,7 +31,7 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 - [ ] Preserve manually-maintained tables/relationships (watermark-based detection)
 - [ ] Output mode: write TMDL to folder (dry run) at /lakehouse/default/Files/[MODEL_NAME]
 - [ ] Output mode: push to Fabric via REST API with LRO polling
-- [ ] Discover Direct Lake URL programmatically from workspace/lakehouse GUIDs (not hardcoded)
+- [ ] Discover Direct Lake URL programmatically: user supplies workspace (name or GUID) + warehouse/lakehouse (name or GUID), library resolves full GUID-based URL
 - [ ] Generate diagram layout JSON
 - [ ] Generate .platform and definition.pbism metadata files
 - [ ] Distributed as PyPI package
@@ -59,7 +59,7 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 - Auth: Token-based via `notebookutils.credentials.getToken` (Fabric-specific)
 - Connection: `mssql-python` library for warehouse connectivity
 - The notebook uses Swedish locale in expressions (`Källa`, `sv-SE`) — this should be configurable or use English defaults
-- Current Direct Lake URL requires hardcoded workspace/lakehouse GUIDs — needs programmatic discovery
+- Current Direct Lake URL requires hardcoded workspace/lakehouse GUIDs — library should accept name or GUID for workspace and warehouse/lakehouse, then resolve to full GUID-based Direct Lake URL via Fabric REST API
 - The existing notebook works against a production warehouse (WH_Gold) with 45 tables and 72 relationships
 - Role-playing dimension support is a key differentiator (e.g., bill-to vs sell-to customer)
 
@@ -87,4 +87,4 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 | Include/exclude table filtering | Both whitelist and blacklist supported | — Pending |
 
 ---
-*Last updated: 2026-02-09 after initialization*
+*Last updated: 2026-02-09 after research phase*

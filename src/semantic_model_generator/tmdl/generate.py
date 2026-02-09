@@ -7,6 +7,10 @@ from semantic_model_generator.domain.types import (
     TableClassification,
     TableMetadata,
 )
+from semantic_model_generator.utils.identifiers import quote_tmdl_identifier
+from semantic_model_generator.utils.type_mapping import map_sql_type_to_tmdl
+from semantic_model_generator.utils.uuid_gen import generate_deterministic_uuid
+from semantic_model_generator.utils.whitespace import indent_tmdl, validate_tmdl_indentation
 
 
 def generate_database_tmdl() -> str:
@@ -15,7 +19,16 @@ def generate_database_tmdl() -> str:
     Returns:
         TMDL database definition with compatibilityLevel 1604.
     """
-    raise NotImplementedError("generate_database_tmdl not yet implemented")
+    content = f"database\n{indent_tmdl(1)}compatibilityLevel: 1604\n"
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated database.tmdl has indentation errors:\n{error_text}")
+
+    return content
 
 
 def generate_model_tmdl(
@@ -33,7 +46,55 @@ def generate_model_tmdl(
     Returns:
         TMDL model definition with culture, ref table lines, dimensions sorted before facts.
     """
-    raise NotImplementedError("generate_model_tmdl not yet implemented")
+    indent1 = indent_tmdl(1)
+
+    # Parse and sort tables: dimensions first, then facts, then unclassified
+    # Within each group, sort by (schema_name, table_name)
+    def parse_qualified_name(qualified_name: str) -> tuple[str, str]:
+        """Parse 'schema.table' into (schema, table)."""
+        parts = qualified_name.split(".", 1)
+        if len(parts) == 2:
+            return parts[0], parts[1]
+        return "", parts[0]
+
+    def sort_key(qualified_name: str) -> tuple[int, str, str]:
+        """Generate sort key for table: (classification_order, schema, table)."""
+        schema, table = parse_qualified_name(qualified_name)
+        classification = classifications.get((schema, table), TableClassification.UNCLASSIFIED)
+
+        # Primary sort: dimension=0, fact=1, unclassified=2
+        classification_order = {
+            TableClassification.DIMENSION: 0,
+            TableClassification.FACT: 1,
+            TableClassification.UNCLASSIFIED: 2,
+        }
+
+        return (classification_order[classification], schema, table)
+
+    sorted_tables = sorted(table_names, key=sort_key)
+
+    # Build model content
+    lines = ["model Model"]
+    lines.append(f"{indent1}culture: en-US")
+    lines.append(f"{indent1}defaultPowerBIDataSourceVersion: powerBI_V3")
+    lines.append(f"{indent1}discourageImplicitMeasures")
+
+    # Add ref table lines
+    for qualified_name in sorted_tables:
+        _, table_name = parse_qualified_name(qualified_name)
+        quoted_table = quote_tmdl_identifier(table_name)
+        lines.append(f"{indent1}ref table {quoted_table}")
+
+    content = "\n".join(lines) + "\n"
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated model.tmdl has indentation errors:\n{error_text}")
+
+    return content
 
 
 def generate_expressions_tmdl(catalog_name: str) -> str:
@@ -45,7 +106,32 @@ def generate_expressions_tmdl(catalog_name: str) -> str:
     Returns:
         TMDL expressions with DirectLake expression template and en-US locale.
     """
-    raise NotImplementedError("generate_expressions_tmdl not yet implemented")
+    indent1 = indent_tmdl(1)
+    indent2 = indent_tmdl(2)
+    indent3 = indent_tmdl(3)
+
+    # Generate deterministic UUID for expression
+    lineage_tag = generate_deterministic_uuid("expression", catalog_name)
+
+    # Use en-US locale with English "Source" variable name (not Swedish "Kalla")
+    content = f"""expression 'DirectLake - {catalog_name}' =
+{indent2}let
+{indent3}Source = AzureStorage.DataLake("", [HierarchicalNavigation=true])
+{indent2}in
+{indent3}Source
+{indent1}lineageTag: {lineage_tag}
+
+{indent1}annotation PBI_IncludeFutureArtifacts = False
+"""
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated expressions.tmdl has indentation errors:\n{error_text}")
+
+    return content
 
 
 def generate_column_tmdl(column: ColumnMetadata, table_qualified_name: str) -> str:
@@ -58,7 +144,37 @@ def generate_column_tmdl(column: ColumnMetadata, table_qualified_name: str) -> s
     Returns:
         TMDL column definition with dataType, lineageTag, summarizeBy, sourceColumn.
     """
-    raise NotImplementedError("generate_column_tmdl not yet implemented")
+    indent1 = indent_tmdl(1)
+    indent2 = indent_tmdl(2)
+
+    # Quote column name if needed
+    quoted_name = quote_tmdl_identifier(column.name)
+
+    # Map SQL type to TMDL type
+    tmdl_type = map_sql_type_to_tmdl(column.sql_type)
+
+    # Generate deterministic UUID for column
+    lineage_tag = generate_deterministic_uuid("column", f"{table_qualified_name}.{column.name}")
+
+    # Build column definition
+    lines = [f"{indent1}column {quoted_name}"]
+    lines.append(f"{indent2}dataType: {tmdl_type.value}")
+    lines.append(f"{indent2}lineageTag: {lineage_tag}")
+    lines.append(f"{indent2}summarizeBy: none")
+    lines.append(f"{indent2}sourceColumn: {column.name}")
+    lines.append("")
+    lines.append(f"{indent2}annotation SummarizationSetBy = Automatic")
+
+    content = "\n".join(lines) + "\n"
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated column TMDL has indentation errors:\n{error_text}")
+
+    return content
 
 
 def generate_partition_tmdl(table: TableMetadata, partition_name: str, catalog_name: str) -> str:
@@ -72,7 +188,30 @@ def generate_partition_tmdl(table: TableMetadata, partition_name: str, catalog_n
     Returns:
         TMDL partition definition with mode:directLake and source references.
     """
-    raise NotImplementedError("generate_partition_tmdl not yet implemented")
+    indent1 = indent_tmdl(1)
+    indent2 = indent_tmdl(2)
+    indent3 = indent_tmdl(3)
+
+    # Quote partition name if needed
+    quoted_partition = quote_tmdl_identifier(partition_name)
+
+    # Build partition definition
+    content = f"""{indent1}partition {quoted_partition} = entity
+{indent2}mode: directLake
+{indent2}source =
+{indent3}entityName: {table.table_name}
+{indent3}expressionSource: 'DirectLake - {catalog_name}'
+{indent3}schemaName: {table.schema_name}
+"""
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated partition TMDL has indentation errors:\n{error_text}")
+
+    return content
 
 
 def generate_table_tmdl(
@@ -92,4 +231,45 @@ def generate_table_tmdl(
     Returns:
         Complete TMDL table definition with columns and partition.
     """
-    raise NotImplementedError("generate_table_tmdl not yet implemented")
+    indent1 = indent_tmdl(1)
+
+    # Quote table name if needed
+    quoted_table = quote_tmdl_identifier(table.table_name)
+
+    # Generate deterministic UUID for table
+    lineage_tag = generate_deterministic_uuid("table", f"{table.schema_name}.{table.table_name}")
+
+    # Sort columns: key columns first, then alphabetically by name
+    key_columns = [
+        col for col in table.columns if any(col.name.startswith(prefix) for prefix in key_prefixes)
+    ]
+    non_key_columns = [col for col in table.columns if col not in key_columns]
+
+    # Sort each group alphabetically
+    sorted_key_columns = sorted(key_columns, key=lambda c: c.name)
+    sorted_non_key_columns = sorted(non_key_columns, key=lambda c: c.name)
+
+    all_columns = sorted_key_columns + sorted_non_key_columns
+
+    # Generate column sections
+    table_qualified_name = f"{table.schema_name}.{table.table_name}"
+    column_sections = [generate_column_tmdl(col, table_qualified_name) for col in all_columns]
+
+    # Generate partition section
+    partition_section = generate_partition_tmdl(table, table.table_name, catalog_name)
+
+    # Compose table TMDL
+    content = f"""table {quoted_table}
+{indent1}lineageTag: {lineage_tag}
+
+{partition_section}
+{"".join(column_sections)}"""
+
+    # Validate before returning
+    errors = validate_tmdl_indentation(content)
+    if errors:
+        error_msgs = [f"Line {e.line_number}: {e.message}" for e in errors]
+        error_text = "\n".join(error_msgs)
+        raise ValueError(f"Generated table TMDL has indentation errors:\n{error_text}")
+
+    return content

@@ -35,10 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. `make check` runs lint + typecheck + test in sequence, all green
   6. Pre-commit hook blocks commits that fail `make check` or have malformed commit messages
   7. Package version is dynamically derived from git tags (no hardcoded version string)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 01-01: pyproject.toml, src layout, hatchling + setuptools-scm, Makefile, ruff, mypy, pytest, pre-commit
+- [ ] 01-01-PLAN.md -- Package scaffold, quality tooling, pre-commit hooks, and pipeline verification
 
 ### Phase 2: Domain Types & Core Utilities
 **Goal**: Pure utility functions and immutable data types exist for deterministic UUID generation, SQL-to-TMDL type mapping, identifier quoting, and TMDL whitespace validation -- the building blocks every downstream phase depends on

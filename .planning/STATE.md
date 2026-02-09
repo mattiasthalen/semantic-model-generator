@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 3 - Schema Discovery & Classification
+**Current focus:** Phase 4 - Relationship Inference
 
 ## Current Position
 
-Phase: 3 of 8 (Schema Discovery & Classification)
-Plan: 3 of 3 in current phase
+Phase: 4 of 8 (Relationship Inference)
+Plan: 1 of 1 in current phase
 Status: Complete
-Branch: gsd/phase-03-schema-discovery-classification
-Last activity: 2026-02-09 -- Phase 3 Plan 3 complete (driver migration to mssql-python)
+Branch: gsd/phase-04-relationship-inference
+Last activity: 2026-02-09 -- Phase 4 Plan 1 complete (relationship inference)
 
-Progress: [████░░░░░░] 100.0% (Phase 3 complete - all 3 plans executed)
+Progress: [████░░░░░░] 100.0% (Phase 4 complete - all 1 plans executed)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 5.2 min
-- Total execution time: 0.87 hours
+- Total plans completed: 7
+- Average duration: 4.8 min
+- Total execution time: 0.92 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [████░░░░░░] 100.0% (Phase 3 complete - all 3 plan
 | 01 | 1 | 268s | 268s |
 | 02 | 2 | 670s | 335s |
 | 03 | 3 | 879s | 293s |
+| 04 | 1 | 250s | 250s |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (409s), 03-01 (271s), 03-02 (336s), 03-03 (272s)
-- Trend: Phase 3 averaging 4.9 min (faster than Phase 2 avg of 5.6 min)
+- Last 5 plans: 03-01 (271s), 03-02 (336s), 03-03 (272s), 04-01 (250s)
+- Trend: Phase 4 plan at 4.2 min, maintaining efficiency from Phase 3
 
 *Updated after each plan completion*
 
@@ -72,6 +73,10 @@ Recent decisions affecting current work:
 - [03-03]: Use mssql-python instead of pyodbc (Microsoft's official GA driver, DDBC with no ODBC Manager dependency)
 - [03-03]: Use ActiveDirectoryDefault authentication in connection string (driver handles DefaultAzureCredential internally)
 - [03-03]: Install Linux system libraries (libltdl7, libkrb5-3, libgssapi-krb5-2) for mssql-python support
+- [04-01]: Role-playing match requires underscore boundary after dimension base name (prevents false positives)
+- [04-01]: Exact-match columns (name equals prefix) produce no relationships and are excluded from role-playing grouping
+- [04-01]: First relationship by sorted from_column is active, rest inactive for role-playing dimensions
+- [04-01]: Relationship IDs use composite pattern: relationship:{from_qualified}.{from_col}->{to_qualified}.{to_col}
 
 ### Pending Todos
 
@@ -80,11 +85,11 @@ None yet.
 ### Blockers/Concerns
 
 - [Research]: TMDL Python examples are sparse (most tooling is .NET-based); may need extra validation in Phase 5
-- [Research]: Role-playing dimension automation patterns have limited public documentation; Phase 4 may need deeper research
+- [Research - RESOLVED]: Role-playing dimension automation implemented successfully with underscore boundary pattern
 - [Research]: Fabric REST API connection binding for cross-environment deployment needs practical validation in Phase 7
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 03-03-PLAN.md (driver migration to mssql-python) - Phase 3 complete (all 3 plans executed)
-Resume file: .planning/phases/03-schema-discovery-classification/03-03-SUMMARY.md
+Stopped at: Completed 04-01-PLAN.md (relationship inference) - Phase 4 complete (all 1 plans executed)
+Resume file: .planning/phases/04-relationship-inference/04-01-SUMMARY.md

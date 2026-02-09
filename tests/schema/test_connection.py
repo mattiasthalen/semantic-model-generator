@@ -44,8 +44,8 @@ class TestCreateFabricConnection:
         # Simulate 2 failures then success
         mock_conn = Mock()
         mock_mssql_python.connect.side_effect = [
-            mssql_python.OperationalError("Transient error 1"),
-            mssql_python.OperationalError("Transient error 2"),
+            mssql_python.OperationalError("Driver error", "Transient connection error"),
+            mssql_python.OperationalError("Driver error", "Transient connection error"),
             mock_conn,  # Success on third attempt
         ]
 

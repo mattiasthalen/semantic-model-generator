@@ -43,6 +43,8 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 - [ ] Testing via make test
 - [ ] make check runs lint + typecheck + test
 - [ ] Pre-commit hook runs make check and validates commit message format
+- [ ] Dev deployment mode: always creates a new semantic model, suffixed with current UTC timestamp
+- [ ] Prod deployment mode: overwrites existing model, requires explicit confirmation parameter (notebook-friendly, no interactive prompts)
 
 ### Out of Scope
 
@@ -85,6 +87,7 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 | Schemas user-supplied, no defaults | Different warehouses use different schema naming | — Pending |
 | Key prefixes user-supplied, no defaults | Different warehouses use different key conventions | — Pending |
 | Include/exclude table filtering | Both whitelist and blacklist supported | — Pending |
+| Dev/prod deployment modes | Dev = new model + UTC suffix (safe iteration), Prod = overwrite with explicit confirm (no interactive prompts in notebooks) | — Pending |
 
 ---
 *Last updated: 2026-02-09 after research phase*

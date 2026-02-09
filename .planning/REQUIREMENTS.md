@@ -45,6 +45,8 @@ Differentiators and quality requirements.
 | REQ-31 | SQL type to TMDL type mapping | P0 |
 | REQ-32 | Configurable locale for expressions (default English, not hardcoded Swedish) | P1 |
 | REQ-33 | Generate deterministic, sorted output for stable Git diffs | P0 |
+| REQ-34 | Dev deployment mode: always create new semantic model, name suffixed with current UTC timestamp | P0 |
+| REQ-35 | Prod deployment mode: overwrite existing model, requires explicit confirmation parameter (no interactive prompts — notebook-friendly) | P0 |
 
 ## Out of Scope
 
@@ -96,6 +98,8 @@ Differentiators and quality requirements.
 | REQ-31 | Phase 2 | Pending |
 | REQ-32 | Phase 5 | Pending |
 | REQ-33 | Phase 5 | Pending |
+| REQ-34 | Phase 7 | Pending |
+| REQ-35 | Phase 7 | Pending |
 
 ---
 *Last updated: 2026-02-09*

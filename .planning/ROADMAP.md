@@ -108,6 +108,7 @@ Plans:
   1. TMDL folder structure is written to /lakehouse/default/Files/[MODEL_NAME] (or user-specified path)
   2. Files containing the generator watermark are overwritten on regeneration; files without the watermark are preserved untouched
   3. Dry-run mode writes to folder without any API calls (pure filesystem output)
+  4. Dev mode appends UTC timestamp suffix to folder name; prod mode writes to the base model name folder
 **Plans**: TBD
 
 Plans:
@@ -116,12 +117,14 @@ Plans:
 ### Phase 7: Fabric REST API Integration
 **Goal**: Library can resolve workspace and lakehouse identifiers, package TMDL output, and deploy a semantic model to Fabric via REST API with long-running operation polling
 **Depends on**: Phase 5
-**Requirements**: REQ-15, REQ-16
+**Requirements**: REQ-15, REQ-16, REQ-34, REQ-35
 **Success Criteria** (what must be TRUE):
   1. User can supply workspace and warehouse/lakehouse as either name or GUID; the library resolves to full GUID-based Direct Lake URL via Fabric REST API
   2. TMDL parts are base64-encoded and assembled into the Fabric semantic model definition payload
   3. Semantic model is created or updated via Fabric REST API POST
   4. Long-running operations are polled until completion with appropriate status reporting
+  5. Dev mode creates a new semantic model with UTC timestamp suffix appended to the model name (safe iteration, no overwrites)
+  6. Prod mode overwrites an existing model; requires an explicit `confirm_overwrite=True` parameter (no interactive prompts — notebook-friendly)
 **Plans**: TBD
 
 Plans:

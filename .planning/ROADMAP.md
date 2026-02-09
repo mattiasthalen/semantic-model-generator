@@ -12,7 +12,7 @@ Build a Python library (PyPI package) that generates TMDL semantic models from M
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Project Foundation & Build System** - Toolchain, package structure, quality gates
+- [x] **Phase 1: Project Foundation & Build System** - Toolchain, package structure, quality gates
 - [ ] **Phase 2: Domain Types & Core Utilities** - Immutable data types, deterministic UUIDs, type mapping, validation helpers
 - [ ] **Phase 3: Schema Discovery & Classification** - Warehouse connectivity, INFORMATION_SCHEMA reading, table filtering, fact/dimension classification
 - [ ] **Phase 4: Relationship Inference** - Key matching, role-playing dimensions, active/inactive marking
@@ -35,10 +35,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. `make check` runs lint + typecheck + test in sequence, all green
   6. Pre-commit hook blocks commits that fail `make check` or have malformed commit messages
   7. Package version is dynamically derived from git tags (no hardcoded version string)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 01-01: pyproject.toml, src layout, hatchling + setuptools-scm, Makefile, ruff, mypy, pytest, pre-commit
+- [x] 01-01-PLAN.md -- Package scaffold, quality tooling, pre-commit hooks, and pipeline verification
 
 ### Phase 2: Domain Types & Core Utilities
 **Goal**: Pure utility functions and immutable data types exist for deterministic UUID generation, SQL-to-TMDL type mapping, identifier quoting, and TMDL whitespace validation -- the building blocks every downstream phase depends on
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
-| 1. Project Foundation & Build System | 0/1 | Not started | - |
+| 1. Project Foundation & Build System | 1/1 | ✓ Complete | 2026-02-09 |
 | 2. Domain Types & Core Utilities | 0/1 | Not started | - |
 | 3. Schema Discovery & Classification | 0/1 | Not started | - |
 | 4. Relationship Inference | 0/1 | Not started | - |

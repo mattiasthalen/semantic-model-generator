@@ -127,16 +127,16 @@ class TestDiscoverTables:
         assert params == ["dbo", "staging", "analytics"]
 
     def test_columns_preserve_ordinal_order(self):
-        """Columns are ordered by ORDINAL_POSITION."""
+        """Columns are ordered by ORDINAL_POSITION (via SQL ORDER BY)."""
         mock_conn = Mock()
         mock_cursor = Mock()
         mock_conn.cursor.return_value = mock_cursor
 
-        # Return rows in non-ordinal order to test sorting
+        # Return rows in ordinal order (as SQL ORDER BY would)
         mock_cursor.fetchall.return_value = [
-            ("dbo", "Test", "Col3", "int", "NO", 3, None, 10, 0),
             ("dbo", "Test", "Col1", "int", "NO", 1, None, 10, 0),
             ("dbo", "Test", "Col2", "int", "NO", 2, None, 10, 0),
+            ("dbo", "Test", "Col3", "int", "NO", 3, None, 10, 0),
         ]
 
         result = discover_tables(mock_conn, ["dbo"])
@@ -144,8 +144,11 @@ class TestDiscoverTables:
         # Verify columns are in ordinal order
         table = result[0]
         assert table.columns[0].ordinal_position == 1
+        assert table.columns[0].name == "Col1"
         assert table.columns[1].ordinal_position == 2
+        assert table.columns[1].name == "Col2"
         assert table.columns[2].ordinal_position == 3
+        assert table.columns[2].name == "Col3"
 
     def test_empty_result_set(self):
         """No tables found returns empty tuple."""

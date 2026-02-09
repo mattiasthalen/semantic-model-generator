@@ -6,6 +6,7 @@ from semantic_model_generator.schema.connection import (
     create_fabric_connection,
     encode_token_for_odbc,
 )
+from semantic_model_generator.schema.discovery import discover_tables
 from semantic_model_generator.schema.filtering import filter_tables
 
 __all__ = [
@@ -13,6 +14,7 @@ __all__ = [
     "classify_table",
     "classify_tables",
     "create_fabric_connection",
+    "discover_tables",
     "encode_token_for_odbc",
     "filter_tables",
 ]

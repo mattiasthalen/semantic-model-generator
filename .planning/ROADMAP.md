@@ -49,10 +49,11 @@ Plans:
   2. Every SQL Server data type used in Fabric warehouses maps to a valid TMDL data type
   3. Identifiers containing special characters (spaces, dots, quotes) are correctly single-quoted with escaped internal quotes
   4. TMDL output uses tabs for indentation (not spaces) and passes whitespace validation
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: Domain types (frozen dataclasses), UUID generation, type mapping, identifier quoting, whitespace validation
+- [ ] 02-01-PLAN.md -- Domain types (frozen dataclasses, TmdlDataType enum) and SQL-to-TMDL type mapping (TDD)
+- [ ] 02-02-PLAN.md -- Deterministic UUID generation, identifier quoting, whitespace validation (TDD)
 
 ### Phase 3: Schema Discovery & Classification
 **Goal**: Library can connect to a Fabric warehouse, read its schema metadata, filter to the requested tables, and classify each as dimension or fact based on key column count
@@ -152,7 +153,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|---------------|--------|-----------|
 | 1. Project Foundation & Build System | 1/1 | ✓ Complete | 2026-02-09 |
-| 2. Domain Types & Core Utilities | 0/1 | Not started | - |
+| 2. Domain Types & Core Utilities | 0/2 | Not started | - |
 | 3. Schema Discovery & Classification | 0/1 | Not started | - |
 | 4. Relationship Inference | 0/1 | Not started | - |
 | 5. TMDL Generation | 0/2 | Not started | - |

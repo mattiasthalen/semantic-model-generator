@@ -3,6 +3,8 @@
 import struct
 from unittest.mock import MagicMock, Mock, patch
 
+import pyodbc
+
 from semantic_model_generator.schema.connection import (
     create_fabric_connection,
     encode_token_for_odbc,
@@ -132,12 +134,15 @@ class TestCreateFabricConnection:
         mock_cred.get_token.return_value = mock_token
         mock_cred_class.return_value = mock_cred
 
+        # Use the real pyodbc exception classes for the retry decorator to catch
+        mock_pyodbc.OperationalError = pyodbc.OperationalError
+        mock_pyodbc.InterfaceError = pyodbc.InterfaceError
+
         # Simulate 2 failures then success
-        mock_pyodbc.OperationalError = Exception  # Mock the exception class
         mock_conn = Mock()
         mock_pyodbc.connect.side_effect = [
-            mock_pyodbc.OperationalError("Transient error 1"),
-            mock_pyodbc.OperationalError("Transient error 2"),
+            pyodbc.OperationalError("Transient error 1"),
+            pyodbc.OperationalError("Transient error 2"),
             mock_conn,  # Success on third attempt
         ]
 

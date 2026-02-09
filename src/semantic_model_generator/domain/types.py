@@ -1,5 +1,6 @@
 """Domain types for semantic model generation."""
 
+import uuid
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -55,3 +56,18 @@ class TableMetadata:
     schema_name: str
     table_name: str
     columns: tuple[ColumnMetadata, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Relationship:
+    """Inferred star-schema relationship between tables."""
+
+    id: uuid.UUID
+    from_table: str  # Schema-qualified fact table: "dbo.FactSales"
+    from_column: str  # FK column name: "FK_CustomerID"
+    to_table: str  # Schema-qualified dim table: "dbo.DimCustomer"
+    to_column: str  # PK column name: "SK_CustomerID"
+    is_active: bool
+    cross_filtering_behavior: str = "oneDirection"
+    from_cardinality: str = "many"
+    to_cardinality: str = "one"

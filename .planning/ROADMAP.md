@@ -14,8 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Project Foundation & Build System** - Toolchain, package structure, quality gates
 - [x] **Phase 2: Domain Types & Core Utilities** - Immutable data types, deterministic UUIDs, type mapping, validation helpers
-- [ ] **Phase 3: Schema Discovery & Classification** - Warehouse connectivity, INFORMATION_SCHEMA reading, table filtering, fact/dimension classification
-- [ ] **Phase 4: Relationship Inference** - Key matching, role-playing dimensions, active/inactive marking
+- [x] **Phase 3: Schema Discovery & Classification** - Warehouse connectivity, INFORMATION_SCHEMA reading, table filtering, fact/dimension classification
+- [x] **Phase 4: Relationship Inference** - Key matching, role-playing dimensions, active/inactive marking
 - [ ] **Phase 5: TMDL Generation** - Template functions for all TMDL file types, deterministic sorted output
 - [ ] **Phase 6: Output Layer** - Filesystem writer, watermark-based preservation of manual edits
 - [ ] **Phase 7: Fabric REST API Integration** - Workspace/lakehouse GUID resolution, semantic model deployment, LRO polling
@@ -65,11 +65,12 @@ Plans:
   3. Views are excluded from discovery (only BASE TABLE rows from INFORMATION_SCHEMA.TABLES)
   4. Tables can be filtered by include list, exclude list, or both
   5. Tables with exactly 1 key column (matching user-supplied prefixes) are classified as dimensions; tables with 2+ key columns are classified as facts
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Table filtering (include/exclude lists) and fact/dimension classification (key column counting) via TDD
-- [ ] 03-02-PLAN.md -- Warehouse connection factory (pyodbc + token auth) and INFORMATION_SCHEMA discovery with view filtering via TDD
+- [x] 03-01-PLAN.md -- Table filtering (include/exclude lists) and fact/dimension classification (key column counting) via TDD
+- [x] 03-02-PLAN.md -- Warehouse connection factory (token auth) and INFORMATION_SCHEMA discovery with view filtering via TDD
+- [x] 03-03-PLAN.md -- Migrate from pyodbc to mssql-python (Microsoft's official GA driver)
 
 ### Phase 4: Relationship Inference
 **Goal**: Given classified schema metadata and key prefixes, the library infers star-schema relationships between facts and dimensions, correctly handling role-playing dimensions and exact-match bypass
@@ -80,10 +81,10 @@ Plans:
   2. Role-playing dimensions are detected when the same dimension is referenced multiple times from a single fact with different key column prefixes
   3. The first role-playing relationship is marked active; subsequent relationships to the same dimension are marked inactive
   4. Exact-match prefixes bypass role-playing detection (the key column name matches a prefix exactly, no suffix stripping)
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 04-01: Key matching, relationship inference, role-playing dimension detection, active/inactive marking, exact-match bypass
+- [x] 04-01-PLAN.md -- Relationship dataclass, key matching, relationship inference, role-playing dimension detection, active/inactive marking, exact-match bypass (TDD)
 
 ### Phase 5: TMDL Generation
 **Goal**: Library generates a complete, syntactically correct TMDL folder structure from schema metadata and inferred relationships, with deterministic output suitable for Git version control
@@ -155,8 +156,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|---------------|--------|-----------|
 | 1. Project Foundation & Build System | 1/1 | ✓ Complete | 2026-02-09 |
 | 2. Domain Types & Core Utilities | 2/2 | ✓ Complete | 2026-02-09 |
-| 3. Schema Discovery & Classification | 0/2 | Not started | - |
-| 4. Relationship Inference | 0/1 | Not started | - |
+| 3. Schema Discovery & Classification | 3/3 | ✓ Complete | 2026-02-09 |
+| 4. Relationship Inference | 1/1 | ✓ Complete | 2026-02-09 |
 | 5. TMDL Generation | 0/2 | Not started | - |
 | 6. Output Layer | 0/1 | Not started | - |
 | 7. Fabric REST API Integration | 0/1 | Not started | - |

@@ -22,7 +22,8 @@ affects: [05-tmdl-generation, integration-testing]
 tech-stack:
   added: []
   patterns:
-    - "Base name matching for fact-to-dimension relationships (exact match + role-playing prefix match)"
+    - "**CORRECTED**: Full column name matching via startswith() - both fact and dim use same prefix (e.g., ID_Customer)"
+    - "Role-playing: fact column ID_Customer_BillTo starts with dim column ID_Customer → match with underscore boundary"
     - "Deterministic relationship IDs via uuid5 with composite name pattern"
     - "Role-playing detection via grouping by (from_table, to_table) with sorted column ordering"
 
@@ -35,7 +36,9 @@ key-files:
     - src/semantic_model_generator/schema/__init__.py
 
 key-decisions:
-  - "Role-playing match requires underscore boundary (CustomerID_BillTo matches CustomerID, but CustomerIDRegion does not)"
+  - "**CORRECTED**: Matching uses startswith() on FULL column names (no prefix stripping) - fact and dimension use same prefix"
+  - "**CORRECTED**: Example: fact ID_Customer_BillTo starts with dim ID_Customer → match (with underscore boundary validation)"
+  - "Role-playing match requires underscore boundary (ID_Customer_BillTo matches ID_Customer, but ID_CustomerRegion does not)"
   - "Exact-match columns (column name equals prefix exactly) produce no relationships and are excluded from role-playing grouping"
   - "First relationship by sorted from_column is active, rest are inactive when same fact references same dimension multiple times"
   - "Relationship IDs use composite pattern: relationship:{from_qualified}.{from_col}->{to_qualified}.{to_col}"
@@ -76,22 +79,25 @@ Each task was committed atomically following TDD protocol:
 1. **Task 1: RED - Write failing tests** - `9a86aef` (test)
    - Added Relationship dataclass to domain/types.py
    - Created stub relationships.py with NotImplementedError
-   - Created 27 comprehensive tests
+   - Created 27 comprehensive tests (WRONG test pattern initially)
    - All new tests fail with NotImplementedError (RED)
    - All 152 existing tests still pass
 
 2. **Task 2: GREEN - Implement relationship inference** - `2b15fc1` (feat)
    - Implemented strip_prefix() with first-matching-prefix logic
    - Implemented is_exact_match() with membership check
-   - Implemented infer_relationships() with full algorithm:
-     - Fact-to-dimension matching via base name equality
-     - Role-playing via base name prefix matching with underscore boundary check
-     - Active/inactive marking via grouping and sorted column ordering
-     - Exact-match bypass (empty base name produces no relationships)
-     - Deterministic UUID generation and output sorting
+   - Implemented infer_relationships() with full algorithm (WRONG initially)
    - Updated schema/__init__.py exports
-   - All 27 new tests pass (GREEN)
+   - All 27 new tests pass (GREEN) - BUT algorithm was fundamentally wrong
    - All 179 total tests pass
+
+3. **CRITICAL BUG FIX** - `886a5ec` (fix)
+   - User identified fundamental flaw: matching should NOT strip prefixes
+   - Corrected to use startswith() on full column names (both use same prefix)
+   - Updated all 27 tests to use correct pattern (same ID_ prefix for fact and dim)
+   - Example: fact ID_Customer_BillTo starts with dim ID_Customer → match
+   - All 179 tests still pass after fix
+   - Algorithm now matches reference notebook pattern correctly
 
 ## Files Created/Modified
 - `src/semantic_model_generator/domain/types.py` - Added Relationship frozen dataclass with uuid.UUID id, from/to table/column, is_active flag, and cardinality/filtering defaults
@@ -123,7 +129,29 @@ Each task was committed atomically following TDD protocol:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written. All tests designed in Task 1 passed in Task 2 without implementation changes.
+**CRITICAL BUG FIX (Post-Execution):**
+
+The initial implementation had a fundamental flaw in the matching algorithm:
+
+**Original (WRONG) approach:**
+- Stripped prefixes from both fact and dimension columns
+- Example: FK_CustomerID -> CustomerID, SK_CustomerID -> CustomerID
+- Matched on stripped base names
+- Used different prefixes for facts (FK_) vs dimensions (SK_)
+
+**Corrected approach:**
+- Both fact and dimension use the SAME prefix (e.g., ID_Customer)
+- Matching via `fact_column.startswith(dim_column)` on FULL column names
+- Example: fact `ID_Customer_BillTo` starts with dim `ID_Customer` → match
+- Role-playing works naturally: multiple fact columns starting with same dim column
+
+**Changes made:**
+- Rewrote `infer_relationships()` to match full column names via startswith()
+- Removed prefix stripping from matching logic (kept `strip_prefix` as helper)
+- Updated all 27 tests to use same prefix (ID_) for both fact and dimension columns
+- All 179 tests still pass after fix
+
+This aligns with the reference notebook's pattern where columns like `_key__customer__bill_to` match `_key__customer` by prefix matching, not base name stripping.
 
 ## Issues Encountered
 

@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 5 of 8 (TMDL Generation)
-Plan: Next phase ready to start
-Status: Ready to plan
-Branch: gsd/phase-04-relationship-inference
-Last activity: 2026-02-09 -- Phase 4 complete with critical bug fix (startswith matching vs prefix stripping)
+Plan: 1 of ? complete
+Status: In progress
+Branch: gsd/phase-05-tmdl-generation
+Last activity: 2026-02-09 -- Completed 05-01: Core TMDL generation functions
 
 Progress: [████████░░] 50.0% (4 of 8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 4.8 min
-- Total execution time: 0.92 hours
+- Total plans completed: 8
+- Average duration: 4.9 min
+- Total execution time: 1.01 hours
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: [████████░░] 50.0% (4 of 8 phases complete)
 | 02 | 2 | 670s | 335s |
 | 03 | 3 | 879s | 293s |
 | 04 | 1 | 250s | 250s |
+| 05 | 1 | 311s | 311s |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (271s), 03-02 (336s), 03-03 (272s), 04-01 (250s)
-- Trend: Phase 4 plan at 4.2 min, maintaining efficiency from Phase 3
+- Last 5 plans: 03-02 (336s), 03-03 (272s), 04-01 (250s), 05-01 (311s)
+- Trend: Phase 5 plan at 5.2 min, TDD implementation with comprehensive testing
 
 *Updated after each plan completion*
 
@@ -81,6 +82,13 @@ Recent decisions affecting current work:
 - [04-01]: Exact-match columns (name equals prefix) produce no relationships and are excluded from role-playing grouping
 - [04-01]: First relationship by sorted from_column is active, rest inactive for role-playing dimensions
 - [04-01]: Relationship IDs use composite pattern: relationship:{from_qualified}.{from_col}->{to_qualified}.{to_col}
+- [05-01]: Use Python f-strings for TMDL generation, no Jinja2 dependency
+- [05-01]: Hardcode en-US locale in expressions.tmdl (not configurable)
+- [05-01]: Column sorting: key columns first, then alphabetically by name
+- [05-01]: Table sorting in model.tmdl: dimensions first, then facts, alphabetical within classification
+- [05-01]: Validate all generated TMDL with whitespace validator before returning
+- [05-01]: DirectLake expression URL is empty string (runtime resolution in Phase 7/8)
+- [05-01]: All TMDL generation functions compose from existing Phase 2 utilities
 
 ### Pending Todos
 
@@ -95,5 +103,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Phase 4 complete with critical bug fix (startswith matching vs prefix stripping) - ready for Phase 5
-Resume file: .planning/phases/04-relationship-inference/04-VERIFICATION.md
+Stopped at: Completed 05-01-PLAN.md - Core TMDL generation functions with TDD
+Resume file: .planning/phases/05-tmdl-generation/05-01-SUMMARY.md

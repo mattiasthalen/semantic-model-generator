@@ -1,6 +1,7 @@
 """Tests for TMDL identifier quoting and unquoting."""
 
 import pytest
+
 from semantic_model_generator.utils.identifiers import (
     quote_tmdl_identifier,
     unquote_tmdl_identifier,

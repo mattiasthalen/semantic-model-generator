@@ -1,6 +1,7 @@
 """Tests for TMDL whitespace validation and indentation helpers."""
 
 import pytest
+
 from semantic_model_generator.utils.whitespace import (
     indent_tmdl,
     validate_tmdl_indentation,

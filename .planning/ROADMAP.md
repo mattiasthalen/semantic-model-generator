@@ -47,7 +47,7 @@ See: `.planning/milestones/v0.1.0-ROADMAP.md` for full phase details
 **Plans**: 1 plan
 
 Plans:
-- [ ] 09-01-PLAN.md — Create publish.yml CD workflow + configure PyPI Trusted Publishing
+- [x] 09-01-PLAN.md — Create publish.yml CD workflow + configure PyPI Trusted Publishing
 
 ## Progress
 
@@ -64,4 +64,4 @@ Phases execute in numeric order.
 | 6. Output Layer | v0.1.0 | 2/2 | Complete | 2026-02-10 |
 | 7. Fabric REST API Integration | v0.1.0 | 2/2 | Complete | 2026-02-10 |
 | 8. Pipeline Orchestration & Public API | v0.1.0 | 2/2 | Complete | 2026-02-10 |
-| 9. Automated CD Pipeline | v0.2.0 | 0/TBD | Not started | - |
+| 9. Automated CD Pipeline | v0.2.0 | 1/1 | Complete | 2026-02-10 |

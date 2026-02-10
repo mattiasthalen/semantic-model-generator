@@ -3,9 +3,9 @@
 from pathlib import Path
 
 import pytest
-from semantic_model_generator.output.writer import get_output_folder, write_tmdl_folder
 
 from semantic_model_generator.output.watermark import WriteSummary
+from semantic_model_generator.output.writer import get_output_folder, write_tmdl_folder
 
 
 class TestGetOutputFolder:

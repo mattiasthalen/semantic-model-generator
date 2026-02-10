@@ -4,20 +4,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-# Stub imports for pipeline functions (will be implemented in GREEN phase)
-from semantic_model_generator.fabric import (  # noqa: F401
+from semantic_model_generator.fabric import (
     deploy_semantic_model_dev,
     deploy_semantic_model_prod,
 )
-from semantic_model_generator.output import write_tmdl_folder  # noqa: F401
-from semantic_model_generator.schema import (  # noqa: F401
+from semantic_model_generator.output import write_tmdl_folder
+from semantic_model_generator.schema import (
     classify_tables,
     create_fabric_connection,
     discover_tables,
     filter_tables,
     infer_relationships,
 )
-from semantic_model_generator.tmdl import generate_all_tmdl  # noqa: F401
+from semantic_model_generator.tmdl import generate_all_tmdl
 
 
 class PipelineError(Exception):
@@ -83,7 +82,32 @@ class PipelineConfig:
 
     def __post_init__(self) -> None:
         """Validate configuration parameters."""
-        raise NotImplementedError
+        # Validate schemas
+        if len(self.schemas) == 0:
+            raise ValueError("schemas cannot be empty; at least one schema required")
+
+        # Validate key_prefixes
+        if len(self.key_prefixes) == 0:
+            raise ValueError("key_prefixes cannot be empty; provide prefixes like ('SK_', 'ID_')")
+
+        # Validate output_mode
+        if self.output_mode not in ("folder", "fabric"):
+            raise ValueError(f"output_mode must be 'folder' or 'fabric', got {self.output_mode}")
+
+        # Validate item_type
+        if self.item_type not in ("Lakehouse", "Warehouse"):
+            raise ValueError(f"item_type must be 'Lakehouse' or 'Warehouse', got {self.item_type}")
+
+        # Validate folder mode requirements
+        if self.output_mode == "folder" and self.output_path is None:
+            raise ValueError("output_path required when output_mode='folder'")
+
+        # Validate fabric mode requirements
+        if self.output_mode == "fabric":
+            if self.workspace is None:
+                raise ValueError("workspace required when output_mode='fabric'")
+            if self.lakehouse_or_warehouse is None:
+                raise ValueError("lakehouse_or_warehouse required when output_mode='fabric'")
 
 
 def generate_semantic_model(config: PipelineConfig) -> dict[str, Any]:
@@ -109,4 +133,91 @@ def generate_semantic_model(config: PipelineConfig) -> dict[str, Any]:
     Raises:
         PipelineError: When any pipeline stage fails.
     """
-    raise NotImplementedError
+    # Stage 1: Connection
+    try:
+        conn = create_fabric_connection(config.sql_endpoint, config.database)
+    except Exception as e:
+        raise PipelineError(
+            "connection", f"Failed to connect to {config.sql_endpoint}: {e}", e
+        ) from e
+
+    # Stage 2: Discovery
+    try:
+        tables = discover_tables(conn, config.schemas)
+    except Exception as e:
+        raise PipelineError(
+            "discovery", f"Failed to read schema for {config.schemas}: {e}", e
+        ) from e
+
+    # Stage 3: Filtering
+    try:
+        filtered = filter_tables(tables, config.include_tables, config.exclude_tables)
+    except Exception as e:
+        raise PipelineError("filtering", f"Failed to filter tables: {e}", e) from e
+
+    # Stage 4: Classification
+    try:
+        classifications = classify_tables(filtered, config.key_prefixes)
+    except Exception as e:
+        raise PipelineError("classification", f"Failed to classify tables: {e}", e) from e
+
+    # Stage 5: Relationship inference
+    try:
+        relationships = infer_relationships(filtered, classifications, config.key_prefixes)
+    except Exception as e:
+        raise PipelineError("relationships", f"Failed to infer relationships: {e}", e) from e
+
+    # Stage 6: TMDL generation
+    try:
+        tmdl_files = generate_all_tmdl(
+            config.model_name,
+            filtered,
+            classifications,
+            relationships,
+            config.key_prefixes,
+            config.catalog_name,
+        )
+    except Exception as e:
+        raise PipelineError("tmdl_generation", f"Failed to generate TMDL: {e}", e) from e
+
+    # Stage 7: Output - branch on output_mode
+    if config.output_mode == "folder":
+        # Folder mode
+        try:
+            assert config.output_path is not None  # Validated in __post_init__
+            summary = write_tmdl_folder(
+                tmdl_files,
+                config.output_path,
+                config.model_name,
+                config.dev_mode,
+                config.overwrite,
+            )
+            return {
+                "mode": "folder",
+                "output_path": summary.output_path,
+                "summary": summary,
+            }
+        except Exception as e:
+            raise PipelineError(
+                "output", f"Failed to write folder at {config.output_path}: {e}", e
+            ) from e
+    else:
+        # Fabric mode
+        try:
+            assert config.workspace is not None  # Validated in __post_init__
+            if config.dev_mode:
+                model_id = deploy_semantic_model_dev(
+                    tmdl_files, config.workspace, config.model_name
+                )
+            else:
+                model_id = deploy_semantic_model_prod(
+                    tmdl_files,
+                    config.workspace,
+                    config.model_name,
+                    config.confirm_overwrite,
+                )
+            return {"mode": "fabric", "model_id": model_id, "model_name": config.model_name}
+        except Exception as e:
+            raise PipelineError(
+                "deployment", f"Failed to deploy to workspace {config.workspace}: {e}", e
+            ) from e

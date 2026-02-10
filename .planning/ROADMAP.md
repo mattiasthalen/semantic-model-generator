@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Relationship Inference** - Key matching, role-playing dimensions, active/inactive marking
 - [x] **Phase 5: TMDL Generation** - Template functions for all TMDL file types, deterministic sorted output
 - [x] **Phase 6: Output Layer** - Filesystem writer, watermark-based preservation of manual edits
-- [ ] **Phase 7: Fabric REST API Integration** - Workspace/lakehouse GUID resolution, semantic model deployment, LRO polling
+- [x] **Phase 7: Fabric REST API Integration** - Workspace/lakehouse GUID resolution, semantic model deployment, LRO polling
 - [ ] **Phase 8: Pipeline Orchestration & Public API** - Main entry point, end-to-end pipeline, integration tests
 
 ## Phase Details
@@ -132,8 +132,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md -- Auth, workspace/lakehouse GUID resolution, Direct Lake URL construction, TMDL base64 packaging (TDD)
-- [ ] 07-02-PLAN.md -- Deployment (create/update), LRO polling, dev/prod mode orchestrators (TDD)
+- [x] 07-01-PLAN.md -- Auth, workspace/lakehouse GUID resolution, Direct Lake URL construction, TMDL base64 packaging (TDD)
+- [x] 07-02-PLAN.md -- Deployment (create/update), LRO polling, dev/prod mode orchestrators (TDD)
 
 ### Phase 8: Pipeline Orchestration & Public API
 **Goal**: A single `generate_semantic_model()` function orchestrates the full pipeline from connection through output, with comprehensive error handling and integration tests proving end-to-end correctness
@@ -162,5 +162,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 4. Relationship Inference | 1/1 | ✓ Complete | 2026-02-09 |
 | 5. TMDL Generation | 2/2 | ✓ Complete | 2026-02-10 |
 | 6. Output Layer | 2/2 | ✓ Complete | 2026-02-10 |
-| 7. Fabric REST API Integration | 0/2 | Not started | - |
+| 7. Fabric REST API Integration | 2/2 | ✓ Complete | 2026-02-10 |
 | 8. Pipeline Orchestration & Public API | 0/1 | Not started | - |

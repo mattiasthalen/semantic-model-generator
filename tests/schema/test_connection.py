@@ -1,10 +1,15 @@
 """Tests for Fabric warehouse connection factory using mssql-python."""
 
+import struct
+import sys
 from unittest.mock import Mock, patch
 
 import mssql_python
 
-from semantic_model_generator.schema.connection import create_fabric_connection
+from semantic_model_generator.schema.connection import (
+    SQL_COPT_SS_ACCESS_TOKEN,
+    create_fabric_connection,
+)
 
 
 @patch("semantic_model_generator.schema.connection.mssql_python")
@@ -64,3 +69,81 @@ class TestCreateFabricConnection:
         result = create_fabric_connection("endpoint.fabric.microsoft.com", "mydb")
 
         assert result == mock_conn
+
+    def test_notebook_authentication(self, mock_mssql_python):
+        """In Fabric notebook, uses notebookutils token with SQL_COPT_SS_ACCESS_TOKEN."""
+        mock_notebookutils = Mock()
+        mock_notebookutils.credentials.getToken.return_value = "notebook-sql-token"
+        mock_conn = Mock()
+        mock_mssql_python.connect.return_value = mock_conn
+
+        sql_endpoint = "test-endpoint.datawarehouse.fabric.microsoft.com"
+        database = "test-database"
+
+        with patch.dict(sys.modules, {"notebookutils": mock_notebookutils}):
+            result = create_fabric_connection(sql_endpoint, database)
+
+            # Verify notebookutils was called for SQL database resource
+            mock_notebookutils.credentials.getToken.assert_called_once_with(
+                "https://database.windows.net"
+            )
+
+            # Verify connection call
+            assert mock_mssql_python.connect.call_count == 1
+            call_args = mock_mssql_python.connect.call_args
+
+            # First argument: connection string (no Authentication=ActiveDirectoryDefault)
+            conn_string = call_args[0][0]
+            assert f"Server={sql_endpoint},1433" in conn_string
+            assert f"Database={database}" in conn_string
+            assert "Encrypt=Yes" in conn_string
+            assert "TrustServerCertificate=No" in conn_string
+            assert "Authentication=ActiveDirectoryDefault" not in conn_string
+
+            # Second argument: attrs_before with SQL_COPT_SS_ACCESS_TOKEN
+            attrs_before = call_args[1].get("attrs_before", {})
+            assert SQL_COPT_SS_ACCESS_TOKEN in attrs_before
+
+            # Verify token struct format
+            token_struct = attrs_before[SQL_COPT_SS_ACCESS_TOKEN]
+            token_bytes = "notebook-sql-token".encode("UTF-16-LE")
+            expected_struct = struct.pack(f"<I{len(token_bytes)}s", len(token_bytes), token_bytes)
+            assert token_struct == expected_struct
+
+            assert result == mock_conn
+
+    def test_standard_authentication_outside_notebook(self, mock_mssql_python):
+        """Outside notebook, uses ActiveDirectoryDefault authentication."""
+        mock_conn = Mock()
+        mock_mssql_python.connect.return_value = mock_conn
+
+        # Ensure notebookutils is NOT in sys.modules
+        original_modules = sys.modules.copy()
+        if "notebookutils" in sys.modules:
+            del sys.modules["notebookutils"]
+
+        try:
+            sql_endpoint = "test-endpoint.datawarehouse.fabric.microsoft.com"
+            database = "test-database"
+
+            result = create_fabric_connection(sql_endpoint, database)
+
+            # Verify connection call
+            assert mock_mssql_python.connect.call_count == 1
+            call_args = mock_mssql_python.connect.call_args
+
+            # Should only have connection string argument (no attrs_before)
+            conn_string = call_args[0][0]
+            assert f"Server={sql_endpoint},1433" in conn_string
+            assert f"Database={database}" in conn_string
+            assert "Authentication=ActiveDirectoryDefault" in conn_string
+            assert "Encrypt=Yes" in conn_string
+
+            # No attrs_before parameter
+            assert "attrs_before" not in call_args[1]
+
+            assert result == mock_conn
+        finally:
+            # Restore original sys.modules
+            sys.modules.clear()
+            sys.modules.update(original_modules)

@@ -64,6 +64,8 @@ Recent decisions affecting current work:
    - Fabric only supports 3.11; remove 3.12 from ci.yml and publish.yml (4 locations)
 2. **Remove catalog_name parameter redundancy** (api) - `src/semantic_model_generator/pipeline.py:63`
    - catalog_name and database are always the same in Fabric; remove redundant parameter
+3. **Remove unused lakehouse_or_warehouse parameter** (api) - `src/semantic_model_generator/pipeline.py:75`
+   - Required by validation but never used in deployment; semantic models deploy to workspaces only
 
 ### Blockers/Concerns
 

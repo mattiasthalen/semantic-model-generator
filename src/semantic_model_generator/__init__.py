@@ -7,9 +7,20 @@ classification and star-schema relationship inference.
 
 from importlib.metadata import PackageNotFoundError, version
 
+from semantic_model_generator.pipeline import (
+    PipelineConfig,
+    PipelineError,
+    generate_semantic_model,
+)
+
 try:
     __version__ = version("semantic-model-generator")
 except PackageNotFoundError:
     __version__ = "0.0.0+unknown"
 
-__all__: list[str] = ["__version__"]
+__all__: list[str] = [
+    "__version__",
+    "PipelineConfig",
+    "PipelineError",
+    "generate_semantic_model",
+]

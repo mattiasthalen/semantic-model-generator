@@ -44,7 +44,16 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 
 ### Active
 
-(None — ready for v0.2.0 planning)
+## Current Milestone: v0.2.0 CD to PyPI
+
+**Goal:** Automate PyPI publishing with tag-based GitHub Actions CD pipeline.
+
+**Target features:**
+- GitHub Actions workflow triggered by git tag push
+- Full quality gate validation (make check) before publishing
+- Package build and verification
+- Automated PyPI publishing
+- GitHub release creation with auto-generated changelog, MILESTONES.md link, and PyPI link
 
 ### Out of Scope
 
@@ -107,4 +116,4 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 | Tags on milestone completion only | Version tags created at milestone completion, not per-phase; v0.0.1 exists for hatchling VCS bootstrap only | Enforced |
 
 ---
-*Last updated: 2026-02-10 after v0.1.0 milestone completion*
+*Last updated: 2026-02-10 after starting v0.2.0 milestone*

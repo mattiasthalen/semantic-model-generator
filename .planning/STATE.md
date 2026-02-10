@@ -9,13 +9,11 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 
 ## Current Position
 
-Milestone: v0.1.0 MVP — SHIPPED 2026-02-10
-Phases: 8 of 8 complete (15 plans)
-Tests: 398 passing
-Branch: main
-Last activity: 2026-02-10 -- Completed v0.1.0 milestone. Ready for v0.2.0 planning.
-
-Progress: v0.1.0 [████████████████████] 100%
+Milestone: v0.2.0 CD to PyPI
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-10 — Milestone v0.2.0 started
 
 ## Performance Metrics
 

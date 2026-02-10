@@ -60,7 +60,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+1. **Remove Python 3.12 from CI checks** (ci) - `.github/workflows/ci.yml:14`
+   - Fabric only supports 3.11, no value in testing 3.12
 
 ### Blockers/Concerns
 

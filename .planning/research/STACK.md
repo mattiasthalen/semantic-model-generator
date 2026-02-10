@@ -1,318 +1,294 @@
-# Technology Stack
+# Stack Research: CD Pipeline to PyPI
 
-**Project:** Python TMDL Semantic Model Generator for Microsoft Fabric
-**Researched:** 2026-02-09
-**Overall Confidence:** MEDIUM-HIGH
+**Domain:** Automated CD pipeline for Python package publishing
+**Researched:** 2026-02-10
+**Confidence:** HIGH
 
-## Recommended Stack
+## Executive Summary
 
-### Core Language & Runtime
+The CD pipeline requires **minimal new dependencies** since the existing build system (hatchling + hatch-vcs) already handles package building and versioning from git tags. The core additions are GitHub Actions workflow components and PyPI authentication configuration—no new Python packages or build tools needed.
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| Python | 3.10+ | Runtime environment | Microsoft Fabric notebooks support Python 3.10 and 3.11 (default 3.11). Modern async support, match statements, and better typing. | HIGH |
-| mssql-python | 1.3.0+ | SQL Server connectivity | Microsoft's official GA driver (Jan 2026) with Direct Database Connectivity (DDBC), no external driver dependencies on Windows, superior performance vs pyodbc, native Azure auth support. Token authentication for Fabric warehouses. | HIGH |
+**Key principle:** Leverage existing infrastructure. The project already has hatchling for builds, hatch-vcs for versioning, and make check for quality gates. The CD pipeline orchestrates these, rather than duplicating them.
 
-### Build & Packaging
+## Core CD Technologies
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| hatchling | latest | Build backend | PyPA-maintained, PEP 621 compliant, recommended by Python Packaging Guide and uv. Simpler than setuptools, faster than poetry-core. Excellent plugin system. | HIGH |
-| setuptools-scm | 9.2.2+ | Dynamic versioning from git tags | De facto standard for git tag versioning. Extracts version from git metadata, manages _version.py automatically. Widely adopted, stable, well-documented. | HIGH |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| GitHub Actions | N/A (platform) | CI/CD orchestration | Native GitHub integration, free for public repos, built-in secrets management |
+| PyPI Trusted Publishing | N/A (feature) | Secure authentication to PyPI | OIDC-based, no stored tokens, automatically rotating credentials, required by PyPI for modern workflows |
+| TestPyPI | N/A (service) | Pre-production testing | Separate PyPI instance for validation before production publish |
 
-### Testing
+## GitHub Actions - Official Actions
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| pytest | 9.0.2+ | Test framework | 52% market share in Python testing. Superior fixture system, minimal boilerplate, 1300+ plugins. Function-based approach aligns with functional programming demand. Native assert statements, parametrization support. | HIGH |
-| pytest-cov | latest | Coverage reporting | Standard pytest coverage plugin. Integrates seamlessly with pytest, generates terminal and HTML reports. | HIGH |
-| pytest-mock | latest | Mocking support | Provides pytest fixtures for unittest.mock. Cleaner API than raw mocks. | MEDIUM |
+| Action | Version | Purpose | Why This Version |
+|--------|---------|---------|------------------|
+| actions/checkout | v6 | Clone repository | Latest major version (2026), includes node24 runtime |
+| actions/setup-python | v6 | Install Python | Latest major version (2026), supports Python 3.11+, includes pip caching |
+| actions/upload-artifact | v4 | Store build artifacts | Latest version with 90% faster uploads, immediate availability |
+| actions/download-artifact | v4 | Retrieve build artifacts | Matches upload-artifact v4 architecture |
+| pypa/gh-action-pypi-publish | v1.13.0 | Publish to PyPI | Official PyPA action, supports trusted publishing + PEP 740 attestations |
 
-### Code Quality & Linting
+## Build Tools (Existing - No Changes)
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| ruff | 0.15.0+ | Linter + Formatter | Replaces Black, isort, Flake8, pyupgrade, autoflake. 10-100x faster than alternatives. 800+ rules. Written in Rust. Adopted by major projects (Pandas, FastAPI, Hugging Face). Single tool = simpler toolchain. | HIGH |
+| Tool | Current Version | Status | Notes |
+|------|----------------|--------|-------|
+| hatchling | (via pyproject.toml) | **Keep as-is** | PEP 517 build backend, 7.5x faster than setuptools, already configured |
+| hatch-vcs | (via pyproject.toml) | **Keep as-is** | Dynamic versioning from git tags, already configured |
+| pypa/build | N/A | **Do NOT add** | Unnecessary - hatchling is already a PEP 517 backend |
 
-### Type Checking
+## Quality Gates (Existing - No Changes)
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| mypy | 1.19.1+ | Static type checker | Most mature Python type checker. 73% of devs use type hints now. Excellent error messages, comprehensive checks. pyright is faster but mypy has better ecosystem support. Consider ty (Astral) when reaches stable 1.0. | HIGH |
+| Tool | Current Version | Status | Notes |
+|------|----------------|--------|-------|
+| ruff | v0.15.0 | **Keep as-is** | Linting + formatting, already in pre-commit |
+| mypy | (in dev dependencies) | **Keep as-is** | Type checking configured for strict mode |
+| pytest | (in dev dependencies) | **Keep as-is** | Test suite with 398 passing tests |
 
-### Pre-commit Hooks
+## Changelog Generation
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| pre-commit | 4.5.1+ | Git hook framework | Industry standard for Python. Ensures make check runs before commit. Manages hook versioning, runs in isolated environments. | HIGH |
+| Tool | Version | Purpose | Recommendation |
+|------|---------|---------|----------------|
+| mikepenz/release-changelog-builder-action | v6 | Generate changelog from conventional commits | **Recommended** - Reads conventional commits from pre-commit hooks, customizable categories, no additional Python dependencies |
+| git-cliff | Latest | Alternative changelog generator | **Alternative** - Rust-based, fast (120ms), requires separate installation |
+| gh CLI | (pre-installed on runners) | Create GitHub releases | **Use for release creation** - Pre-installed on GitHub Actions runners |
 
-### HTTP Client
+**Recommendation:** Use `mikepenz/release-changelog-builder-action@v6` because:
+- Works directly with existing conventional-pre-commit setup
+- No additional dependencies
+- Proven track record (v6 release, active maintenance)
+- Outputs markdown suitable for GitHub releases
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| httpx | 0.28.1+ | HTTP client for Fabric REST API | Modern requests-compatible API with async support, HTTP/2, full type annotations, 100% test coverage. Better than requests (sync-only) or aiohttp (async-only). | HIGH |
+## Installation (CD Pipeline Only)
 
-### Authentication
+**No new Python packages required.** The CD pipeline uses:
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| azure-identity | latest | Azure authentication | Provides DefaultAzureCredential for token auth. Handles multiple auth flows (CLI, managed identity, environment, interactive). Required for Fabric warehouse token auth and REST API auth. | HIGH |
+```yaml
+# Existing tools are invoked via make check
+- run: make check
 
-### YAML/TMDL Handling
+# Package building uses existing hatchling backend
+- run: python -m build
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| ruamel.yaml | latest | YAML parsing for TMDL | YAML 1.2 compliant, preserves comments and formatting (critical for TMDL), round-trip capability. TMDL is YAML-like. Superior to PyYAML for format preservation. | MEDIUM |
-
-### Supporting Libraries
-
-| Library | Version | Purpose | When to Use | Confidence |
-|---------|---------|---------|-------------|------------|
-| pydantic | latest | Data validation & settings | Validate TMDL structure, configuration management, type-safe data classes with validation | MEDIUM |
-| typer | latest | CLI framework (optional) | If CLI interface needed. Type-hint driven, built on Click, modern approach, auto-generates help | MEDIUM |
-
-### Development Tools
-
-| Tool | Purpose | Configuration Notes | Confidence |
-|------|---------|---------------------|------------|
-| ruff | Linting + formatting | Configured in pyproject.toml. Replaces Black+isort+Flake8. Run via `make lint` | HIGH |
-| mypy | Type checking | Strict mode in pyproject.toml. Run via `make typecheck` | HIGH |
-| pytest | Test execution | Test discovery in tests/. Run via `make test` | HIGH |
-| pre-commit | Git hooks | `.pre-commit-config.yaml` with ruff, mypy, pytest. Run via `make check` | HIGH |
-
-## Installation
-
-```bash
-# Core dependencies
-pip install mssql-python>=1.3.0 httpx>=0.28.1 azure-identity ruamel.yaml
-
-# Optional: Data validation and CLI
-pip install pydantic typer
-
-# Development dependencies
-pip install -D pytest>=9.0.2 pytest-cov pytest-mock ruff>=0.15.0 mypy>=1.19.1 pre-commit>=4.5.1
-
-# Build tools
-pip install -D hatchling setuptools-scm
+# Publishing uses GitHub Action (no pip install needed)
+- uses: pypa/gh-action-pypi-publish@v1.13.0
 ```
 
-## pyproject.toml Configuration
+**No changes to pyproject.toml, Makefile, or pre-commit-config.yaml.**
 
+## Alternatives Considered
+
+| Category | Recommended | Alternative | When to Use Alternative |
+|----------|-------------|-------------|-------------------------|
+| PyPI Auth | Trusted Publishing (OIDC) | API Tokens | Never - API tokens are deprecated for security reasons |
+| Build Tool | hatchling (existing) | setuptools | Never - hatchling is faster and already configured |
+| Changelog | release-changelog-builder-action | git-cliff | If Rust tooling is preferred and 120ms vs 1s matters |
+| Release Creation | gh CLI | softprops/action-gh-release | If custom release asset handling needed |
+| Build Command | python -m build | hatch build | Either works - python -m build is more standard |
+
+## What NOT to Add
+
+| Avoid | Why | Consequence |
+|-------|-----|-------------|
+| setuptools_scm | Duplicate versioning tool | Conflicts with hatch-vcs, causes build failures |
+| New linting/formatting tools | Ruff already handles this | Contradictory style rules, slower pre-commit |
+| Custom build scripts | hatchling + PEP 517 is standard | Non-standard builds, harder maintenance |
+| Stored API tokens | Security anti-pattern | Token leaks, manual rotation, broader permissions |
+| Hatch CLI tool | Not needed for CD | Adds dependency when python -m build works |
+| tox | Over-engineering for this use case | Existing make check + matrix strategy already tests multiple Python versions |
+| Poetry | Different ecosystem | Conflicts with hatchling, requires migration |
+| Separate version files | hatch-vcs auto-generates | Manual sync issues, source of truth confusion |
+
+## Integration Points
+
+### Existing Build System
 ```toml
+# pyproject.toml (NO CHANGES)
 [build-system]
-requires = ["hatchling", "setuptools-scm"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
-
-[project]
-name = "semantic-model-generator"
-dynamic = ["version"]
-requires-python = ">=3.10"
-dependencies = [
-    "mssql-python>=1.3.0",
-    "httpx>=0.28.1",
-    "azure-identity",
-    "ruamel.yaml",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=9.0.2",
-    "pytest-cov",
-    "pytest-mock",
-    "ruff>=0.15.0",
-    "mypy>=1.19.1",
-    "pre-commit>=4.5.1",
-]
 
 [tool.hatch.version]
 source = "vcs"
 
-[tool.setuptools_scm]
-write_to = "src/semantic_model_generator/_version.py"
-
-[tool.ruff]
-line-length = 100
-target-version = "py310"
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP"]  # Core rules
-extend-select = ["B", "C4", "SIM"]  # Bugbear, comprehensions, simplify
-
-[tool.mypy]
-python_version = "3.10"
-strict = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "--cov=src --cov-report=term-missing --cov-report=html"
+[tool.hatch.build.hooks.vcs]
+version-file = "src/semantic_model_generator/_version.py"
 ```
 
-## Alternatives Considered
+**CD pipeline uses this unchanged:**
+1. `actions/checkout@v6` with `fetch-depth: 0` (hatch-vcs needs full git history)
+2. `python -m build` invokes hatchling backend
+3. hatch-vcs reads git tags to determine version
+4. Artifacts placed in `dist/` directory
 
-| Category | Recommended | Alternative | Why Not Alternative | Confidence |
-|----------|-------------|-------------|-------------------|------------|
-| SQL Driver | mssql-python | pyodbc 5.3.0 | Requires external ODBC driver install, platform-specific behavior, slower performance | HIGH |
-| SQL Driver | mssql-python | pymssql 2.3.11 | **Officially discontinued** (archived Nov 2019), despite PyPI releases continuing. Project recommends pyodbc. Lacks modern features. | HIGH |
-| Type Checker | mypy | pyright | Pyright is faster but mypy has better ecosystem integration, more comprehensive checks, better documentation | MEDIUM |
-| Type Checker | mypy | ty (Astral) | 10-60x faster than mypy, but **preview status** (not production-ready as of Feb 2026). Revisit when reaches 1.0. | LOW |
-| Linter | ruff | Black + Flake8 + isort | Multiple tools = slower CI, complex config, maintenance overhead. Ruff replaces all with single tool. | HIGH |
-| Build Backend | hatchling | poetry | Poetry lags in PEP 621 compliance, uses proprietary tool.poetry config sections, heavier tooling | MEDIUM |
-| Build Backend | hatchling | setuptools | Setuptools works but more verbose config, slower builds, legacy baggage | MEDIUM |
-| HTTP Client | httpx | requests | requests is sync-only, no HTTP/2, not actively developed. httpx is modern successor. | HIGH |
-| HTTP Client | httpx | aiohttp | aiohttp is async-only, no sync API. httpx supports both sync/async with same API. | MEDIUM |
-| YAML Library | ruamel.yaml | PyYAML | PyYAML doesn't preserve comments/formatting, YAML 1.1 only. TMDL benefits from format preservation. | MEDIUM |
-| Test Framework | pytest | unittest | unittest requires classes, verbose boilerplate, weaker assertion reporting. pytest more pythonic. | HIGH |
+### Existing Quality Gates
+```makefile
+# Makefile (NO CHANGES)
+check: lint typecheck test
+```
 
-## What NOT to Use
+**CD pipeline calls this directly:**
+```yaml
+- run: make check
+```
 
-| Avoid | Why | Use Instead | Confidence |
-|-------|-----|-------------|------------|
-| pymssql | **Project discontinued** (Nov 2019), archived GitHub repo, maintainers recommend pyodbc | mssql-python | HIGH |
-| AMO/TOM libraries | .NET only, no native Python bindings. Would require pythonnet/CLR bridge, adding complexity | Direct TMDL file generation + REST API | HIGH |
-| microsoft-fabric-api | **Does not exist on PyPI** as of Feb 2026. Community packages (msfabricpysdkcore) exist but unsupported | httpx + direct REST API calls | HIGH |
-| Black + isort + Flake8 separately | Redundant with ruff, 10-100x slower, complex multi-tool config | ruff (replaces all) | HIGH |
-| setup.py for build | Legacy approach, verbose, PEP 517/518 recommend pyproject.toml | pyproject.toml + hatchling | HIGH |
-| Poetry for this project | PEP 621 non-compliance, lock file overhead for library (not app), tool.poetry vendor lock-in | hatchling + pip | MEDIUM |
+### Existing Conventional Commits
+```yaml
+# .pre-commit-config.yaml (NO CHANGES)
+- repo: https://github.com/compilerla/conventional-pre-commit
+  rev: v3.4.0
+  hooks:
+    - id: conventional-pre-commit
+      stages: [commit-msg]
+```
 
-## Stack Patterns by Variant
+**CD pipeline reads these:**
+- Changelog generator parses commit messages following conventional commit format
+- Categories: feat, fix, docs, chore, test, refactor, ci, build, perf, style
 
-**If developing inside Fabric notebook:**
-- Use `%pip install` for package installation
-- Validate against Python 3.11 (Fabric default)
-- Azure auth via DefaultAzureCredential (picks up notebook identity automatically)
-- Constrain to packages available in Fabric environment or use inline installation
+## Workflow Architecture
 
-**If developing as standalone CLI tool:**
-- Add typer for CLI interface
-- Add rich for terminal formatting
-- Consider click if prefer decorator-based CLI
+### Three-Job Pattern (Recommended)
 
-**If requiring C extensions in future:**
-- Switch to PDM build backend (better C/C++ extension support)
-- Keep hatchling's simpler config as long as pure Python
+**1. Build Job** (Runs on all pushes)
+- Checkout with full history (`fetch-depth: 0`)
+- Setup Python 3.11, 3.12 (matrix)
+- Install package: `pip install -e .`
+- Run quality gates: `make check`
+- Build package: `python -m build`
+- Upload artifacts: `actions/upload-artifact@v4`
+
+**2. TestPyPI Job** (Runs on main branch pushes)
+- Download artifacts: `actions/download-artifact@v4`
+- Publish to TestPyPI using trusted publishing
+- No environment protection (automatic)
+
+**3. PyPI + Release Job** (Runs on tag pushes only)
+- Download artifacts: `actions/download-artifact@v4`
+- Generate changelog: `release-changelog-builder-action@v6`
+- Create GitHub release: `gh release create`
+- Publish to PyPI using trusted publishing
+- **Requires manual approval** (GitHub environment protection)
+
+### Separation Rationale
+
+| Separation | Security Benefit |
+|------------|------------------|
+| Build job has no publish permissions | Cannot accidentally publish |
+| PyPI job requires `id-token: write` | Scoped to specific job only |
+| GitHub environment protection | Manual approval prevents bad releases |
+| TestPyPI publishes on all main merges | Early detection of publishing issues |
+
+## PyPI Trusted Publishing Setup
+
+**One-time manual configuration on PyPI:**
+
+1. **TestPyPI**: https://test.pypi.org/manage/account/publishing/
+   - Repository owner: `username`
+   - Repository name: `semantic-model-generator`
+   - Workflow name: `cd.yml`
+   - Environment name: (leave blank for TestPyPI)
+
+2. **Production PyPI**: https://pypi.org/manage/account/publishing/
+   - Repository owner: `username`
+   - Repository name: `semantic-model-generator`
+   - Workflow name: `cd.yml`
+   - Environment name: `pypi`
+
+3. **GitHub Environment Protection**:
+   - Settings → Environments → New environment: `pypi`
+   - Enable "Required reviewers"
+   - Add yourself as reviewer
+   - Check "Prevent self-review" (optional, for team workflows)
+
+**Workflow configuration:**
+```yaml
+jobs:
+  publish-pypi:
+    environment: pypi  # Links to protection rules
+    permissions:
+      id-token: write  # CRITICAL: Required for trusted publishing
+      contents: write  # For creating GitHub releases
+```
 
 ## Version Compatibility
 
-| Package | Compatible With | Notes | Confidence |
-|---------|-----------------|-------|------------|
-| mssql-python 1.3.0+ | Python 3.10-3.14 | Requires Python >=3.10 | HIGH |
-| pytest 9.0.2+ | Python 3.10+ | Breaking changes in 9.0, pin major version | HIGH |
-| ruff 0.15.0+ | Python 3.7+ | Target Python 3.10 in config | HIGH |
-| mypy 1.19.1+ | Python 3.9+ | Configure for Python 3.10 target | HIGH |
-| httpx 0.28.1+ | Python 3.8+ | No compatibility issues | HIGH |
-| hatchling | setuptools-scm | Compatible, both support pyproject.toml | HIGH |
+| Component | Requirement | Notes |
+|-----------|-------------|-------|
+| Python | 3.11+ | Already specified in pyproject.toml |
+| GitHub Actions runner | ubuntu-latest | v2.327.1+ for node24 support |
+| Git | 2.0+ | For `fetch-depth: 0` and tagging |
+| hatch-vcs | Any recent | Requires full git history (`fetch-depth: 0`) |
 
-## Fabric Notebook Compatibility
+## Build Command Comparison
 
-| Requirement | Status | Notes | Confidence |
-|-------------|--------|-------|------------|
-| Python 3.10+ | ✅ Supported | Fabric notebooks support 3.10 and 3.11 (default) | HIGH |
-| Custom packages | ✅ Supported | Install via %pip or %conda inline commands | HIGH |
-| Environment resource | ❌ Not supported | No Environment integration for Python notebooks (preview limitation) | HIGH |
-| Pre-installed packages | ℹ️ Varies | DuckDB, Polars, scikit-learn pre-installed. Core deps must be installed. | MEDIUM |
-| Runtime override | ❌ Not supported | Cannot override runtime packages in Fabric | MEDIUM |
+Both work with hatchling backend:
 
-## Open Questions & Limitations
+```bash
+# Option 1: Standard PEP 517 frontend (recommended for CI)
+python -m build
 
-### TMDL Generation Strategy
-
-**Question:** Generate TMDL directly as text or use intermediate object model?
-
-**Options:**
-1. **Direct text generation** - Simple, no dependencies, but brittle and hard to validate
-2. **Intermediate Python objects + serialization** - Type-safe, testable, but more complex
-3. **AMO/TOM via pythonnet** - Authoritative but heavy (.NET dependency)
-
-**Recommendation:** Start with option 2 (Python objects + ruamel.yaml serialization). Use Pydantic for validation. Enables functional approach with immutable data structures.
-
-**Confidence:** MEDIUM (needs phase-specific research)
-
-### Fabric REST API SDK
-
-**Issue:** No official Microsoft Fabric Python SDK on PyPI (microsoft-fabric-api doesn't exist). Community packages (msfabricpysdkcore) are unsupported.
-
-**Recommendation:** Use httpx to call Fabric REST API directly. Well-documented endpoints, type-safe with Pydantic models, no SDK lock-in.
-
-**Trade-off:** Manual API versioning, no built-in retry logic (add httpx retries manually).
-
-**Confidence:** MEDIUM-HIGH
-
-### Token Authentication Flow
-
-**Question:** How to obtain tokens for Fabric warehouse + REST API?
-
-**Answer:** Use `azure-identity` DefaultAzureCredential:
-- In Fabric notebooks: Automatically picks up notebook's managed identity
-- Local development: Falls back to Azure CLI credentials
-- CI/CD: Environment variables or managed identity
-
-**Implementation:**
-```python
-from azure.identity import DefaultAzureCredential
-
-credential = DefaultAzureCredential()
-token = credential.get_token("https://database.windows.net/.default")  # SQL
-api_token = credential.get_token("https://analysis.windows.net/powerbi/api/.default")  # Fabric API
+# Option 2: Hatch-specific command (requires hatch CLI)
+hatch build
 ```
 
-**Confidence:** HIGH
+**Recommendation:** Use `python -m build` in CI because:
+- Standard across all PEP 517 backends
+- No additional tool installation
+- Official recommendation from packaging.python.org
+- Already available with Python standard library
 
-### TMDL Validation
+## Performance Notes
 
-**Question:** How to validate generated TMDL is correct?
+- **hatchling**: 2.1s builds vs setuptools' 15.8s (7.5x speedup)
+- **actions/upload-artifact@v4**: 90% faster uploads vs v3
+- **Trusted publishing**: No token rotation overhead
+- **Changelog generation**: ~1s for typical commit range
 
-**Options:**
-1. Schema validation via Pydantic models
-2. Deploy to test workspace and check for errors
-3. Parse with ruamel.yaml and validate structure
+## Security Best Practices
 
-**Recommendation:** All three - Pydantic validation during generation, YAML parsing for syntax, deployment test for semantic correctness.
+1. **Never store PyPI tokens in GitHub secrets** - Use trusted publishing
+2. **Scope `id-token: write` to publish job only** - Not globally
+3. **Require manual approval for production** - GitHub environment protection
+4. **Test on TestPyPI first** - Catches authentication issues early
+5. **Use exact version tags for actions** - Not branch pointers like `master`
+6. **Enable PEP 740 attestations** - Enabled by default in pypa/gh-action-pypi-publish v1.11.0+
 
-**Confidence:** MEDIUM
+## CI/CD Anti-Patterns to Avoid
+
+1. **Don't duplicate quality checks** - CI already runs `make check`, CD should reuse it
+2. **Don't build package in multiple jobs** - Build once, publish multiple times
+3. **Don't use `pip install build hatchling`** - Python -m build works without installation
+4. **Don't publish on every commit** - Only on tags (production) and main (TestPyPI)
+5. **Don't skip `fetch-depth: 0`** - hatch-vcs needs full history for versioning
+6. **Don't store wheels in git** - Artifacts are temporary, PyPI is the registry
 
 ## Sources
 
 ### Official Documentation (HIGH Confidence)
-- [TMDL Overview - Microsoft Learn](https://learn.microsoft.com/en-us/analysis-services/tmdl/tmdl-overview?view=sql-analysis-services-2025)
-- [Fabric REST API: Create Semantic Model](https://learn.microsoft.com/en-us/rest/api/fabric/semanticmodel/items/create-semantic-model)
-- [mssql-python GA Announcement - Microsoft Tech Community](https://techcommunity.microsoft.com/blog/sqlserver/announcing-general-availability-of-the-mssql-python-driver/4470788)
-- [Microsoft Python Driver for SQL Server - Microsoft Learn](https://learn.microsoft.com/en-us/sql/connect/python/mssql-python/python-sql-driver-mssql-python?view=sql-server-ver17)
-- [Azure Identity - DefaultAzureCredential](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.defaultazurecredential?view=azure-python)
-- [Python in Fabric Notebooks - Microsoft Learn](https://learn.microsoft.com/en-us/fabric/data-engineering/using-python-experience-on-notebook)
+- [Publishing Python packages with GitHub Actions (Python Packaging User Guide)](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/) — Workflow structure, trusted publishing setup
+- [pypi-publish GitHub Action](https://github.com/marketplace/actions/pypi-publish) — v1.13.0 features, permissions requirements
+- [build · PyPI](https://pypi.org/project/build/) — Version 1.4.0 (2026-01-08)
+- [GitHub Actions: Managing environments](https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment) — Environment protection rules
+- [PyPI Trusted Publishers](https://docs.pypi.org/trusted-publishers/using-a-publisher/) — OIDC authentication setup
 
-### PyPI Package Versions (HIGH Confidence)
-- [pytest 9.0.2 - PyPI](https://pypi.org/project/pytest/)
-- [ruff 0.15.0 - PyPI](https://pypi.org/project/ruff/)
-- [mypy 1.19.1 - PyPI](https://pypi.org/project/mypy/)
-- [setuptools-scm 9.2.2 - PyPI](https://pypi.org/project/setuptools-scm/)
-- [httpx 0.28.1 - PyPI](https://pypi.org/project/httpx/)
-- [pre-commit 4.5.1 - PyPI](https://pypi.org/project/pre-commit/)
-- [mssql-python 1.3.0 - PyPI](https://pypi.org/project/mssql-python/)
-- [pymssql 2.3.11 - PyPI](https://pypi.org/project/pymssql/)
-- [pyodbc 5.3.0 - PyPI](https://pypi.org/project/pyodbc/)
+### GitHub Actions Versions (HIGH Confidence)
+- [actions/setup-python Releases](https://github.com/actions/setup-python/releases) — v6 with node24
+- [actions/upload-artifact](https://github.com/actions/upload-artifact) — v4 performance improvements
 
-### Tool Comparisons (MEDIUM Confidence)
-- [Ruff Documentation - Astral](https://docs.astral.sh/ruff/)
-- [Python Packaging Best Practices 2026 - dasroot.net](https://dasroot.net/posts/2026/01/python-packaging-best-practices-setuptools-poetry-hatch/)
-- [Pytest vs Unittest - PyCharm Blog](https://blog.jetbrains.com/pycharm/2024/03/pytest-vs-unittest/)
-- [HTTPX vs Requests vs AIOHTTP - Oxylabs](https://oxylabs.io/blog/httpx-vs-requests-vs-aiohttp)
-- [pymssql vs pyodbc Performance - Microsoft Python Blog](https://devblogs.microsoft.com/python/mssql-python-vs-pyodbc-benchmarking-sql-server-performance/)
-- [ruamel.yaml for Python - Top Python Libraries](https://medium.com/top-python-libraries/why-ruamel-yaml-should-be-your-python-yaml-library-of-choice-81bc17891147)
+### Best Practices (MEDIUM Confidence)
+- [Publishing Python Packages to PyPI: Complete Guide](https://inventivehq.com/blog/python-pypi-publishing-guide) — 2026 best practices
+- [How to Automate Releases with GitHub Actions](https://oneuptime.com/blog/post/2026-01-25-automate-releases-github-actions/view) — Release automation patterns
+- [Hatchling Build Backend 2026](https://johal.in/hatchling-build-backend-pep-517-compliant-python-packaging-2026-2/) — Performance benchmarks
 
-### Deprecation & Status (HIGH Confidence)
-- [Pymssql Project Discontinuation - GitHub Issue #668](https://github.com/pymssql/pymssql/issues/668)
-- [ty Type Checker Announcement - Astral Blog](https://astral.sh/blog/ty)
+### Changelog Tools (MEDIUM Confidence)
+- [Release Changelog Builder](https://github.com/marketplace/actions/release-changelog-builder) — v6 features
+- [git-cliff](https://git-cliff.org/) — Alternative changelog generator
+- [gh release create](https://cli.github.com/manual/gh_release_create) — GitHub CLI documentation
 
-### Community & Ecosystem (MEDIUM Confidence)
-- [Fabric January 2026 Feature Summary - Microsoft Fabric Blog](https://blog.fabric.microsoft.com/en-us/blog/fabric-january-2026-feature-summary?ft=All)
-- [Python Type Checking: mypy vs Pyright - Medium](https://medium.com/@asma.shaikh_19478/python-type-checking-mypy-vs-pyright-performance-battle-fce38c8cb874)
-- [Pre-commit Hooks Guide 2025 - Medium](https://gatlenculp.medium.com/effortless-code-quality-the-ultimate-pre-commit-hooks-guide-for-2025-57ca501d9835)
+### Anti-Patterns (MEDIUM Confidence)
+- [Python CI/CD Pipeline Guide](https://medium.com/hydroinformatics/the-ultimate-guide-to-python-ci-cd-mastering-github-actions-composite-actions-for-modern-python-0d7730c17b9e) — Modern Python CI/CD patterns
+- [setuptools_scm vs hatch-vcs](https://www.pyopensci.org/python-package-guide/package-structure-code/python-package-versions.html) — Versioning tool comparison
 
 ---
-
-*Stack research for: Python TMDL Semantic Model Generator for Microsoft Fabric*
-*Researched: 2026-02-09*
-*Confidence: MEDIUM-HIGH (core stack HIGH, TMDL-specific patterns MEDIUM due to limited Python examples)*
+*Stack research for: semantic-model-generator CD pipeline*
+*Researched: 2026-02-10*

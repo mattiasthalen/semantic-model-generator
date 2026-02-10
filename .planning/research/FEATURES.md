@@ -1,268 +1,333 @@
-# Feature Landscape
+# Feature Research
 
-**Domain:** TMDL/Semantic Model Generator for Microsoft Fabric
-**Researched:** 2026-02-09
-**Confidence:** MEDIUM
+**Domain:** Tag-based CD pipeline for PyPI package publishing
+**Researched:** 2026-02-10
+**Confidence:** HIGH
 
-## Table Stakes
+## Feature Landscape
 
-Features users expect. Missing = product feels incomplete.
+### Table Stakes (Users Expect These)
+
+Features users assume exist. Missing these = pipeline feels incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| **Schema inference from metadata** | Standard pattern - all semantic model generators read source schema to build models | LOW | Read INFORMATION_SCHEMA.COLUMNS from Fabric warehouse (already implemented) |
-| **Fact/dimension classification** | Core star schema requirement - users expect automatic detection of table types | MEDIUM | Key-based classification (1 key = dimension, 2+ = fact) is standard heuristic (already implemented) |
-| **Relationship inference** | Manual relationship creation is time-consuming; automation is expected | MEDIUM | Key matching across tables with naming convention support (already implemented) |
-| **TMDL folder structure generation** | Standard TMDL output format required for compatibility | LOW | database.tmdl, model.tmdl, tables/, relationships.tmdl, expressions.tmdl (already implemented) |
-| **DirectLake partition support** | Default mode for Fabric warehouse semantic models; not supporting this = broken for primary use case | MEDIUM | DirectLake on SQL mode with proper parquet reference (already implemented) |
-| **Business-friendly naming** | Technical names (snake_case, prefixes) must convert to business names | MEDIUM | Column/table name transformation, removing technical artifacts |
-| **Basic validation** | Schema errors caught before deployment prevent failed refreshes | MEDIUM | Relationship validity, naming conflicts, reserved words, circular dependencies |
-| **Dry-run mode** | Users need to preview generated model before deployment | LOW | Folder output mode (already implemented) |
-| **Deployment to Fabric** | Manual deployment is friction; push via API expected | MEDIUM | REST API integration with proper authentication (already implemented) |
-| **Include/exclude table filtering** | Not all tables belong in semantic model; selective inclusion expected | LOW | Table list configuration (already implemented) |
-| **Schema filtering** | Multi-schema warehouses need per-schema control | LOW | Schema list configuration (already implemented) |
-| **Deterministic output** | Regeneration must not cause false diffs in source control | MEDIUM | Stable object IDs, consistent ordering (already implemented with deterministic UUIDs) |
+| Tag-triggered workflow | Industry standard for Python releases | LOW | `on: push: tags: 'v*'` pattern is universal across PyPI packages |
+| Full test suite execution | Prevent broken releases | LOW | Already have `make check` (lint, typecheck, test) - just run it |
+| Build both wheel and sdist | PyPI best practice requirement | LOW | `python -m build` creates both by default with hatchling |
+| Trusted Publisher auth | Modern security standard (no API tokens) | LOW | PyPI OIDC with `id-token: write` permission - requires PyPI config |
+| Publish to PyPI | Core purpose of CD pipeline | LOW | `pypa/gh-action-pypi-publish@release/v1` with trusted publishing |
+| GitHub release creation | Users expect release notes on GitHub | MEDIUM | Can use `gh release create` or GitHub's auto-generated notes |
+| Build artifact verification | Ensure package installs correctly | MEDIUM | Test install from built wheel before publishing to PyPI |
+| Workflow failure notifications | Know when releases fail | LOW | GitHub Actions sends email on workflow failure by default |
 
-## Differentiators
+### Differentiators (Competitive Advantage)
 
-Features that set product apart. Not expected, but valued.
+Features that set the product apart. Not required, but valuable.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Role-playing dimension support** | Handles date/dimension reuse (OrderDate, ShipDate, etc.) - rare in auto-generators | HIGH | Detect multiple FK references to same dimension, create inactive relationships with proper naming |
-| **Watermark-based preservation** | Allows manual edits alongside automation - most tools are regenerate-everything | HIGH | Preserve content between watermarks during regeneration (already implemented) |
-| **Python library (not CLI)** | Embeddable in Fabric notebooks = native workflow for Fabric users | LOW | Already implemented; differentiator vs standalone tools |
-| **Metadata-driven customization** | JSON/YAML config for naming rules, relationship hints, custom properties | MEDIUM | External config file defines transformations, overrides, business rules |
-| **Relationship confidence scoring** | Flag uncertain inferred relationships for review | MEDIUM | Score relationships by name similarity, data type match, cardinality; surface low-confidence for validation |
-| **Automatic measure table** | Separate measures from facts (best practice often skipped in auto-generation) | LOW | Create dedicated measure table, move all measures there |
-| **Smart column exclusion** | Auto-hide technical columns (IDs, audit fields, ETL metadata) | MEDIUM | Pattern-based detection: surrogate keys, created_by, modified_at, hash columns, etc. |
-| **Calculation group scaffolding** | Generate time intelligence or other calc group templates | HIGH | Pre-built calc groups for common patterns (YTD, MTD, YoY, etc.) - requires understanding of user's measures |
-| **Semantic lineage metadata** | Embed source table/column mappings in descriptions for traceability | LOW | Add lineage info to TMDL descriptions: "Source: warehouse.schema.table.column" |
-| **Relationship naming conventions** | Readable relationship names vs default "Table1_Table2" | LOW | Name relationships descriptively: "FactSales_to_DimDate_OrderDate" |
-| **Composite model support** | Mix DirectLake with import/DirectQuery for hybrid scenarios | HIGH | Allow some tables to be import mode (e.g., for calculated tables or external sources) |
-| **Incremental refresh configuration** | Generate incremental refresh policies for large fact tables | MEDIUM | Detect date columns, configure RangeStart/RangeEnd parameters, set policies |
+| Automated changelog in release | Users see what changed without reading commits | MEDIUM | User requires auto-generated changelog from git history + MILESTONES.md link |
+| Multi-version testing matrix | Confidence across Python versions | LOW | Already testing 3.11, 3.12 in CI - reuse for CD validation |
+| Package attestations | Supply chain security (provenance) | LOW | Enabled by default with trusted publishing via `pypa/gh-action-pypi-publish` |
+| PyPI link in release notes | Direct navigation to published package | LOW | Auto-generate link to `https://pypi.org/project/{name}/{version}/` |
+| Manual approval gate | Prevent accidental production releases | MEDIUM | GitHub environment protection with required reviewers |
+| TestPyPI preview | Test package before production publish | MEDIUM | Separate workflow or job that publishes to test.pypi.org first |
+| Version consistency checks | Ensure tag matches package version | LOW | Verify git tag version equals hatch-vcs generated version |
+| Rollback documentation | Clear recovery process for bad releases | LOW | Document PyPI yanking process (can't delete, only yank) |
 
-## Anti-Features
+### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to explicitly NOT build.
+Features that seem good but create problems.
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Automatic measure generation** | Measures are business logic - auto-generation creates noise (SUM everything) not insight | Document measure patterns; provide measure templates users can adapt |
-| **Complex AI/ML inference** | Inferring business semantics (hierarchies, display folders, measure logic) from schema alone = guesswork | Use simple heuristics; let users configure via metadata |
-| **GUI configuration** | Python library in notebooks = code-based config is native; GUI adds complexity | YAML/JSON config files + Python API |
-| **Schema migration** | Changing source schema = different domain; not a generator's job | Regenerate from new schema; watermarks preserve manual work |
-| **Full DAX optimization** | DAX performance tuning requires context (data volume, cardinality, usage patterns) | Generate naive DAX; provide Best Practice Analyzer integration hooks |
-| **Multi-source consolidation** | Joining data from multiple warehouses/databases = ETL concern, not modeling | Assume single warehouse; ETL upstream should consolidate |
-| **Real-time refresh orchestration** | Refresh scheduling = platform concern (Fabric pipelines) | Generate model; let Fabric handle refresh |
-| **Custom visual generation** | Report layer concern, not semantic model | Stop at semantic model; users build reports |
-| **Automatic RLS (Row-Level Security)** | Security rules = business logic requiring deep domain knowledge | Provide RLS scaffolding/templates; users fill in logic |
-| **Automatic object-level security** | Same as RLS - security policy requires business understanding | Scaffold roles structure; users configure permissions |
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| Automatic version bumping | "Automate everything" impulse | Loses control of versioning strategy, conflicts with tag-based approach where human decides version | Use git tags as source of truth - human creates tag, CD publishes it |
+| Publishing on every commit | Fast iteration mindset | Pollutes PyPI with noise, no semantic meaning to versions, breaks user trust | Only publish on tagged releases with semantic versions |
+| Bypassing quality gates for hotfixes | "This one is urgent" pressure | Creates precedent for skipping tests, leads to broken releases in production | Run full test suite always - if tests are too slow, optimize tests not gates |
+| Building on multiple OS platforms | "Support all platforms" completeness | Pure Python package has no OS-specific code - wastes CI time | Build once on Linux - wheels are platform-independent for pure Python |
+| Automatic retries on publish failure | Resilience to transient failures | Can result in duplicate publishes, masks real issues that need investigation | Fail fast, investigate, fix root cause, manually re-run |
+| Embedding secrets in workflow | Convenience over security | Trusted publishing eliminates this need entirely | Use PyPI trusted publishers (OIDC) - no secrets needed |
 
 ## Feature Dependencies
 
 ```
-Schema Inference (base)
-    └──> Fact/Dimension Classification
-            └──> Relationship Inference
-                    └──> Role-Playing Dimension Support (requires multiple relationships)
-    └──> Column Exclusion (requires schema understanding)
-    └──> Business-Friendly Naming (operates on schema)
+Tag Push
+    └──triggers──> Quality Gates (make check)
+                       └──requires──> Multi-version Testing
+                       └──success──> Build Artifacts (wheel + sdist)
+                                         └──success──> Verify Package Install
+                                                           └──success──> Publish to PyPI (Trusted Publisher)
+                                                                             └──success──> Create GitHub Release
+                                                                                               └──includes──> Auto-generated Changelog
+                                                                                               └──includes──> PyPI Link
+                                                                                               └──includes──> MILESTONES.md Link
 
-TMDL Folder Generation (base)
-    └──> Deterministic Output (requires consistent TMDL serialization)
-    └──> Watermark Preservation (requires parsing existing TMDL)
-    └──> DirectLake Partitions (requires partition definition in TMDL)
+Manual Approval Gate ──gates──> Publish to PyPI
+    (optional enhancement)
 
-Validation (base)
-    └──> Relationship Confidence Scoring (subset of validation)
+TestPyPI Preview ──validates before──> Publish to PyPI
+    (optional enhancement)
 
-Deployment to Fabric
-    └──> Validation (must validate before deploy)
-
-Metadata-Driven Customization
-    └──> enhances ALL features (naming, relationships, exclusions, etc.)
-
-Calculation Group Scaffolding
-    └──conflicts with──> Simple Measure Generation (both address measure patterns, but calc groups are better)
+Package Attestations ──auto-enabled with──> Trusted Publisher
 ```
 
 ### Dependency Notes
 
-- **Schema Inference is foundational**: All classification, naming, and relationship features depend on understanding the source schema first
-- **Role-playing dimensions require relationship inference**: Can't detect role-playing until relationships are inferred
-- **Watermark preservation requires TMDL parsing**: Must read existing TMDL to identify preserved sections
-- **Validation gates deployment**: Should never deploy invalid models
-- **Metadata config is cross-cutting**: Can influence naming, relationships, classification, exclusions
+- **Quality Gates require Multi-version Testing:** Must test on all supported Python versions (3.11, 3.12) before publishing
+- **Build Artifacts require Quality Gates success:** Don't build if tests/lint/typecheck fail
+- **Verify Package requires Build Artifacts:** Must build wheel before testing installation
+- **Publish requires Verify success:** Don't publish if built package doesn't install correctly
+- **GitHub Release requires Publish success:** Only create release after PyPI publish succeeds
+- **Changelog generation is standalone:** Can run in parallel with build, combines results later
+- **Manual Approval gates Publish (optional):** If environment protection enabled, blocks publish until reviewer approves
+- **TestPyPI validates before production (optional):** Sequential - test on test.pypi.org, then publish to production PyPI
+- **Attestations are automatic:** Enabled by default with trusted publishing, no explicit configuration needed
 
-## MVP Recommendation
+## MVP Definition
 
-### Launch With (v1.0)
+### Launch With (v0.2.0)
 
-Based on existing implementation and table stakes analysis:
+Minimum viable CD pipeline - what's needed to automate releases safely.
 
-- [x] Schema inference from INFORMATION_SCHEMA
-- [x] Fact/dimension classification (key-based)
-- [x] Relationship inference with key matching
-- [x] TMDL folder structure generation
-- [x] DirectLake partition support
-- [x] Include/exclude table/schema filtering
-- [x] Deterministic UUID generation
-- [x] Watermark-based preservation
-- [x] Dry-run folder output mode
-- [x] REST API deployment
-- [ ] **Basic validation** (relationship validity, naming conflicts)
-- [ ] **Business-friendly naming** (remove prefixes, snake_case → Title Case)
-- [ ] **Smart column exclusion** (hide technical columns)
+- [x] Tag-triggered workflow — Core CD activation mechanism
+- [x] Full quality gates (make check) — Already have linting, type checking, 398 tests
+- [x] Multi-version testing matrix — Already testing Python 3.11, 3.12 in CI
+- [x] Build wheel + sdist — Standard `python -m build` with hatchling
+- [x] Package installation verification — Test `pip install` from built wheel works
+- [x] Trusted Publisher auth — Modern OIDC, no secrets needed
+- [x] Publish to PyPI — Core publishing with `pypa/gh-action-pypi-publish`
+- [x] Create GitHub release — With tag, title, and body
+- [x] Auto-generated changelog — User requirement: git history-based changelog
+- [x] PyPI link in release — User requirement: direct link to published package
+- [x] MILESTONES.md link — User requirement: link to milestone documentation
 
-**Rationale**: These 12 features (9 done + 3 needed) constitute a complete, production-ready tool. Validation prevents bad deployments. Naming makes models usable. Column exclusion makes models clean.
+### Add After Validation (v0.2.x)
 
-### Add After Validation (v1.x)
+Features to add once core CD is proven reliable.
 
-Once core is validated by users:
+- [ ] Manual approval gate — Add when team wants control over release timing (needs GitHub environment setup)
+- [ ] TestPyPI preview — Add if team wants double-verification before production (separate test publish job)
+- [ ] Release announcement automation — Slack/Discord notification on successful release
+- [ ] Changelog improvement — Conventional commits parsing for better categorization
+- [ ] Version mismatch detection — Explicit check that git tag matches hatch-vcs version
 
-- [ ] **Role-playing dimension support** — High value but complex; users can manually adjust v1 output
-- [ ] **Relationship confidence scoring** — Helps users trust/verify automation
-- [ ] **Automatic measure table** — Best practice but not blocking
-- [ ] **Semantic lineage metadata** — Governance value grows with adoption
-- [ ] **Metadata-driven customization** — Power users will request this
-- [ ] **Relationship naming conventions** — Quality-of-life improvement
+### Future Consideration (v0.3+)
 
-**Triggers for adding:**
-- Role-playing dimensions: User feedback shows manual adjustment is pain point
-- Confidence scoring: Users report uncertainty about auto-generated relationships
-- Measure table: Users adopt tool widely, want to enforce best practices
-- Lineage metadata: Governance/auditing requirements emerge
-- Metadata config: Multiple users want different conventions
-- Relationship naming: Source control diffs show relationship churn
+Features to defer until more complex needs emerge.
 
-### Future Consideration (v2+)
-
-Defer until product-market fit established and usage patterns understood:
-
-- [ ] **Calculation group scaffolding** — Complex; requires understanding measure patterns
-- [ ] **Composite model support** — Niche use case; DirectLake covers most scenarios
-- [ ] **Incremental refresh configuration** — Platform handles this; may not be needed
-
-**Why defer:**
-- Calculation groups: High complexity, unclear if users want scaffolding vs manual control
-- Composite models: Limited demand; DirectLake + import hybrid is edge case
-- Incremental refresh: Fabric may auto-configure; need to assess if manual config is valuable
+- [ ] Multi-package publishing — If monorepo grows to multiple PyPI packages
+- [ ] Conditional publishing — Different PyPI indices for alpha/beta/stable tags
+- [ ] Rollback automation — Automated yanking + revert commit on critical failures
+- [ ] Performance benchmarking — Automated performance regression detection in CD
+- [ ] Documentation deployment — Publish docs to ReadTheDocs or GitHub Pages on release
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Basic validation | HIGH | MEDIUM | **P1** |
-| Business-friendly naming | HIGH | MEDIUM | **P1** |
-| Smart column exclusion | HIGH | MEDIUM | **P1** |
-| Role-playing dimension support | HIGH | HIGH | P2 |
-| Relationship confidence scoring | MEDIUM | MEDIUM | P2 |
-| Automatic measure table | MEDIUM | LOW | P2 |
-| Semantic lineage metadata | MEDIUM | LOW | P2 |
-| Metadata-driven customization | HIGH | MEDIUM | P2 |
-| Relationship naming conventions | LOW | LOW | P2 |
-| Calculation group scaffolding | MEDIUM | HIGH | P3 |
-| Composite model support | LOW | HIGH | P3 |
-| Incremental refresh configuration | LOW | MEDIUM | P3 |
+| Tag-triggered workflow | HIGH | LOW | P1 |
+| Quality gates execution | HIGH | LOW | P1 |
+| Build wheel + sdist | HIGH | LOW | P1 |
+| Trusted Publisher auth | HIGH | LOW | P1 |
+| Publish to PyPI | HIGH | LOW | P1 |
+| Package verification | HIGH | MEDIUM | P1 |
+| GitHub release creation | HIGH | MEDIUM | P1 |
+| Auto-generated changelog | HIGH | MEDIUM | P1 |
+| PyPI link in release | MEDIUM | LOW | P1 |
+| MILESTONES.md link | MEDIUM | LOW | P1 |
+| Multi-version testing | HIGH | LOW | P1 |
+| Package attestations | MEDIUM | LOW | P1 |
+| Manual approval gate | MEDIUM | MEDIUM | P2 |
+| TestPyPI preview | MEDIUM | MEDIUM | P2 |
+| Version consistency check | LOW | LOW | P2 |
+| Release notifications | LOW | MEDIUM | P3 |
+| Rollback automation | LOW | HIGH | P3 |
 
 **Priority key:**
-- **P1**: Must have for v1.0 launch (closes critical gaps in current implementation)
-- **P2**: Should have for v1.x (user-driven based on feedback/usage)
-- **P3**: Nice to have for v2+ (defer until patterns emerge)
+- P1: Must have for v0.2.0 launch
+- P2: Should have, add when team requests
+- P3: Nice to have, future consideration
 
-## Competitor Feature Analysis
+## Integration with Existing Tooling
 
-| Feature | Tabular Editor | AnalyticsCreator | Power BI MCP Server | Our Approach |
-|---------|---------------|------------------|---------------------|--------------|
-| **Schema inference** | Manual (user builds model) | Automatic from DWH | Manual (user builds model) | **Automatic from Fabric warehouse** |
-| **TMDL generation** | Full support (create/edit) | Generates semantic model + TMDL | Full support (create/edit) | **Generate from schema** |
-| **Relationship inference** | Manual definition | Automatic from metadata | Manual definition | **Automatic from keys** |
-| **Role-playing dimensions** | Manual setup | Not documented | Manual setup | **Target: Automatic detection** |
-| **Watermark preservation** | N/A (manual tool) | N/A (full regeneration) | N/A (manual tool) | **Unique: Preserve manual edits** |
-| **DirectLake support** | Full support | Full support | Full support | **Full support** |
-| **Python library** | .NET API (C#) | Desktop app + CLI | Node.js MCP | **Python (native to Fabric notebooks)** |
-| **Deployment** | XMLA/TMSL/REST | Integrated deployment | XMLA/REST | **REST API** |
-| **Validation** | Best Practice Analyzer | Built-in validation | N/A | **Target: Schema-based validation** |
-| **Metadata config** | UI + scripting | Central metadata model | N/A | **Target: YAML/JSON config** |
+### Already Built (v0.1.0)
 
-**Key Differentiators vs Competitors:**
+| Existing Tool | CD Integration | Complexity |
+|---------------|---------------|------------|
+| `make check` | Run in CD workflow before build | LOW - single command |
+| `hatchling` with `hatch-vcs` | Build backend, extracts version from git tags | LOW - already configured |
+| Multi-Python CI matrix | Reuse existing CI matrix for CD validation | LOW - copy strategy from ci.yml |
+| 398 passing tests | Quality gate prevents broken releases | LOW - already comprehensive |
+| `pytest` with coverage | Ensures test coverage before publish | LOW - part of make check |
+| `ruff` + `mypy` | Code quality gates | LOW - part of make check |
 
-1. **Tabular Editor**: We automate what they require manual work for (schema → model). They're a model *editor*, we're a model *generator*.
+### New Requirements
 
-2. **AnalyticsCreator**: Enterprise tool generating full DWH + semantic model. We're lightweight, single-purpose (semantic model only), and Python-native for Fabric notebooks.
+| Tool | Purpose | Why This Tool |
+|------|---------|--------------|
+| `pypa/gh-action-pypi-publish` | Official PyPA GitHub Action for publishing | Industry standard, trusted publishing support, attestations by default |
+| `gh` CLI or `actions/create-release` | Create GitHub releases | `gh` CLI simpler, allows custom changelog formatting |
+| `git-changelog` or manual script | Generate changelog from git history | Flexible parsing, supports templates, recent release (Jan 2026) |
+| GitHub Actions `environment` | Optional manual approval | Built-in GitHub feature, no external dependencies |
 
-3. **Power BI MCP Server**: AI agent integration for model manipulation. We focus on schema-driven generation, not AI-assisted editing.
+## Workflow Architecture
 
-**Our niche**: Fabric-native, Python-based, schema-driven semantic model generation with preservation of manual edits. Bridges gap between "build everything manually" and "enterprise metadata-driven platform."
+### Single Workflow vs. Multiple Workflows
 
-## Key Insights from Research
+**Recommendation:** Single workflow with sequential jobs
 
-### What's Standard (Must Match)
+**Rationale:**
+- **Simpler:** One `.github/workflows/release.yml` file
+- **Atomic:** Either entire release succeeds or fails, no partial states
+- **Dependency management:** GitHub Actions job dependencies ensure correct ordering
+- **Artifact sharing:** Built wheel/sdist passed between jobs as artifacts
 
-1. **Star schema assumption**: All semantic model tools assume dimensional modeling (facts + dimensions)
-2. **TMDL as lingua franca**: TMDL is the standard format; all tools read/write it
-3. **DirectLake as default**: Fabric semantic models use DirectLake unless there's a reason not to
-4. **Relationship inference from keys**: FK → PK matching is standard heuristic
-5. **Business-friendly naming**: Technical names must be cleaned for end users
+**Job Structure:**
+```
+1. validate (matrix: [py3.11, py3.12])
+   - Run make check on each Python version
+   - Build artifacts once (py3.11 only)
 
-### What's Rare (Opportunity)
+2. verify
+   - Test install built wheel in fresh environment
+   - Verify imports work
 
-1. **Preservation of manual edits**: Most tools regenerate everything or require full manual work
-2. **Role-playing dimension auto-detection**: Complex feature rarely automated
-3. **Python library for notebooks**: Most tools are desktop apps or CLI, not notebook-embeddable
-4. **Confidence scoring for relationships**: Most tools present inferred relationships as-is without uncertainty flags
+3. publish (environment: pypi, if using manual approval)
+   - Upload to PyPI with trusted publishing
+   - Attestations generated automatically
 
-### What's Complex (Avoid)
+4. release
+   - Generate changelog from git history
+   - Create GitHub release with changelog, PyPI link, MILESTONES.md link
+```
 
-1. **Measure generation**: Business logic inference is guesswork; generates noise
-2. **Semantic inference**: Hierarchies, display folders, formats require business knowledge
-3. **Multi-source models**: ETL concern, not modeling concern
-4. **Security auto-generation**: RLS/OLS rules = business policy, not schema pattern
+### Alternative: Two-Stage with TestPyPI
+
+**If team wants preview capability:**
+```
+1. validate (same as above)
+2. verify (same as above)
+3. publish-test
+   - Upload to test.pypi.org
+   - Test install from test PyPI
+4. publish-prod (environment: pypi with manual approval)
+   - Upload to production PyPI
+5. release (same as above)
+```
+
+**Tradeoff:** More confidence but adds manual approval requirement
+
+## Competitor Analysis
+
+| Feature | poetry-publish | flit | hatch | Our Approach |
+|---------|----------------|------|-------|--------------|
+| Build tool | poetry | flit | hatch | hatch (already using hatchling) |
+| Version source | pyproject.toml | pyproject.toml | git tags (hatch-vcs) | git tags (hatch-vcs) - tag is source of truth |
+| PyPI auth | API token or OIDC | API token or OIDC | API token or OIDC | OIDC only (trusted publishing) |
+| GitHub release | Manual or separate action | Manual or separate action | Manual or separate action | Automated with changelog |
+| Attestations | Optional | Optional | Optional | Automatic with trusted publishing |
+| Quality gates | External (CI) | External (CI) | External (CI) | Built into CD workflow |
+| TestPyPI | Optional separate job | Optional separate job | Optional separate job | v0.2.0: No; v0.2.x: Optional |
+
+**Our differentiation:**
+1. **Quality gates in CD:** Don't just publish on tag - validate first
+2. **Package verification:** Test installation before publishing
+3. **Complete release:** GitHub release with changelog + links generated automatically
+4. **Multi-version validation:** Test on all supported Python versions before publish
+
+## Common Pitfalls and Mitigations
+
+### Pitfall: Publishing before tests complete
+
+**Problem:** Workflow publishes even if earlier tests fail
+**Mitigation:** Use job dependencies (`needs: [validate, verify]`) - publish only if all prerequisites succeed
+
+### Pitfall: Version mismatch between tag and package
+
+**Problem:** Git tag is `v1.2.3` but package builds as `1.2.4` due to uncommitted changes
+**Mitigation:**
+- Ensure workflow runs `fetch-depth: 0` so hatch-vcs sees full history
+- Optional: Add explicit version consistency check job
+
+### Pitfall: Trusted Publisher not configured on PyPI
+
+**Problem:** First publish attempt fails because PyPI doesn't trust the GitHub repo
+**Mitigation:** Document PyPI setup steps - must configure trusted publisher BEFORE first automated publish
+
+### Pitfall: Secrets in environment variables
+
+**Problem:** Developer adds PyPI token as secret "just in case"
+**Mitigation:** Document that trusted publishing requires NO secrets - explicitly avoid token configuration
+
+### Pitfall: Forgotten release notes
+
+**Problem:** GitHub release created with empty body
+**Mitigation:** Auto-generate changelog from git history - always have content
+
+### Pitfall: Failed publish with no rollback
+
+**Problem:** Publish fails halfway through, unclear how to recover
+**Mitigation:**
+- Atomic publish - either entire workflow succeeds or fails
+- Document recovery: PyPI allows re-publishing same version if publish failed
+- If publish succeeded but release failed, can manually create GitHub release
+
+### Pitfall: No quality gate bypass for emergencies
+
+**Problem:** Critical security fix needs immediate publish, but tests are failing for unrelated reason
+**Mitigation:** Don't create bypass - fix tests or publish manually with explicit override (documented procedure)
 
 ## Sources
 
-**Official Microsoft Documentation:**
-- [TMDL Overview - Microsoft Learn](https://learn.microsoft.com/en-us/analysis-services/tmdl/tmdl-overview) - HIGH confidence
-- [Power BI Semantic Models in Fabric - Microsoft Learn](https://learn.microsoft.com/en-us/fabric/data-warehouse/semantic-models) - HIGH confidence
-- [Direct Lake Overview - Microsoft Learn](https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview) - HIGH confidence
-- [TMDL View in Power BI Desktop - Microsoft Learn](https://learn.microsoft.com/en-us/power-bi/transform-model/desktop-tmdl-view) - HIGH confidence
-- [Incremental Refresh Overview - Microsoft Learn](https://learn.microsoft.com/en-us/power-bi/connect-data/incremental-refresh-overview) - HIGH confidence
-- [Understand Star Schema - Microsoft Learn](https://learn.microsoft.com/en-us/power-bi/guidance/star-schema) - HIGH confidence
-- [Semantic Model Validation - Microsoft Learn](https://learn.microsoft.com/en-us/power-bi/guidance/powerbi-implementation-planning-content-lifecycle-management-validate) - HIGH confidence
+**PyPI Publishing Best Practices:**
+- [PyPI Trusted Publishers Documentation](https://docs.pypi.org/trusted-publishers/)
+- [Python Packaging User Guide - Publishing with GitHub Actions](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)
+- [pypa/gh-action-pypi-publish GitHub Repository](https://github.com/pypa/gh-action-pypi-publish)
+- [PyPI Package Publishing Guide 2026](https://inventivehq.com/blog/python-pypi-publishing-guide)
+- [Publishing to PyPI from GitHub Actions without tokens](https://til.simonwillison.net/pypi/pypi-releases-from-github)
 
-**Microsoft Blog Posts (Recent):**
-- [Power BI Modeling MCP Server - GitHub](https://github.com/microsoft/powerbi-modeling-mcp) - MEDIUM confidence (preview feature)
-- [TMDL View Generally Available - Power BI Blog](https://powerbi.microsoft.com/en-us/blog/tmdl-view-generally-available/) - HIGH confidence
-- [Fabric January 2026 Feature Summary - Fabric Blog](https://blog.fabric.microsoft.com/en-US/blog/fabric-january-2026-feature-summary/) - HIGH confidence
-- [Service Principal Support in Semantic Link - Fabric Blog](https://blog.fabric.microsoft.com/en-us/blog/service-principal-support-in-semantic-link-enabling-scalable-secure-automation/) - MEDIUM confidence
-- [Fabric REST API for Semantic Models - Power BI Blog](https://powerbi.microsoft.com/en-us/blog/announcing-a-new-fabric-rest-api-for-connection-binding-of-semantic-models/) - HIGH confidence
+**Tag-Based CD Pipelines:**
+- [Tag-Based Python CI/CD Pipeline Guide](https://dhruv-ahuja.github.io/posts/tag-based-ci-cd-pipeline/)
+- [Python CI/CD Pipeline Mastery 2025](https://atmosly.com/blog/python-ci-cd-pipeline-mastery-a-complete-guide-for-2025)
+- [Python Packages CI/CD Guide](https://py-pkgs.org/08-ci-cd.html)
 
-**Community & Tool Documentation:**
-- [Tabular Editor TMDL Documentation](https://docs.tabulareditor.com/te3/features/tmdl.html) - HIGH confidence
-- [AnalyticsCreator Semantic Model Automation](https://www.analyticscreator.com/blog/why-a-data-warehouse-foundation-is-vital-for-power-bi) - MEDIUM confidence (marketing content)
-- [Role-Playing Dimensions Best Practices - Data Mozart](https://data-mozart.com/welcome-to-powerbi-thetare-role-playing-dimensions/) - MEDIUM confidence
-- [Role-Playing Dimensions in Fabric DirectLake - Chris Webb's Blog](https://blog.crossjoin.co.uk/2024/09/29/role-playing-dimensions-in-fabric-directlake-semantic-models/) - MEDIUM confidence
-- [Power BI Semantic Model Checklist - Data Goblins](https://data-goblins.com/dataset-checklist) - MEDIUM confidence
+**Changelog Generation:**
+- [git-changelog PyPI Package](https://pypi.org/project/git-changelog/) - Released Jan 30, 2026
+- [changelog-gen PyPI Package](https://pypi.org/project/changelog-gen/) - Released Jan 7, 2026
+- [python-semantic-release Documentation](https://python-semantic-release.readthedocs.io/)
 
-**Research & Patterns:**
-- [Semantic Model Best Practices for AI - Microsoft Learn](https://learn.microsoft.com/en-us/fabric/data-science/semantic-model-best-practices) - HIGH confidence
-- [Power BI Copilot Best Practices 2026 - MAQ Software](https://maqsoftware.com/insights/power-bi-copilot-best-practices.html) - LOW confidence (not verified)
-- [Data Lineage and Governance - Select Star](https://www.selectstar.com/resources/data-lineage-data-governance) - LOW confidence (general governance, not Power BI specific)
+**GitHub Actions Configuration:**
+- [GitHub Docs - Building and Testing Python](https://docs.github.com/en/actions/tutorials/build-and-test-code/python)
+- [GitHub Docs - Automatically Generated Release Notes](https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes)
+- [GitHub Actions Environment Protection Rules 2026](https://oneuptime.com/blog/post/2026-01-25-github-actions-environment-protection-rules/view)
+- [GitHub Docs - Managing Environments for Deployment](https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment)
+
+**Package Build & Verification:**
+- [Python Packaging Guide - Package Formats](https://packaging.python.org/en/latest/discussions/package-formats/)
+- [TestPyPI Usage Guide](https://packaging.python.org/guides/using-testpypi/)
+- [PyPI Package Index Guide 2026](https://www.articsledge.com/post/python-package-index-pypi)
+
+**Quality Gates:**
+- [Enforce Code Quality Gates in GitHub Actions](https://graphite.com/guides/enforce-code-quality-gates-github-actions)
+- [Deployment Gates Guide 2026](https://oneuptime.com/blog/post/2026-01-30-deployment-gates/view)
+- [Status Checks in GitHub Actions 2026](https://oneuptime.com/blog/post/2026-01-26-status-checks-github-actions/view)
+
+**Attestations & Security:**
+- [PyPI Attestations Documentation](https://docs.pypi.org/attestations/)
+- [GitHub Docs - Using Artifact Attestations](https://docs.github.com/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
+- [PyPI Digital Attestation Support](https://blog.deps.dev/pypi-attestations/)
+
+**Anti-Patterns & Pitfalls:**
+- [DevOps Common Mistakes and Anti-Patterns 2026](https://medium.com/@sainath.814/devops-roadmap-part-45-common-devops-mistakes-anti-patterns-how-to-avoid-them-based-on-real-de981419c7c4)
+- [CI/CD Anti-Patterns Book](https://leanpub.com/ci-cd-anti-patterns)
+- [CI/CD Anti-Patterns - What's Slowing Down Your Pipeline](https://em360tech.com/tech-articles/cicd-anti-patterns-whats-slowing-down-your-pipeline)
+
+**PyPI Release Management:**
+- [PyPI Docs - Yanking Releases](https://docs.pypi.org/project-management/yanking/)
+- [What to Do When You Botch a PyPI Release](https://snarky.ca/what-to-do-when-you-botch-a-release-on-pypi/)
 
 ---
-
-**Research confidence: MEDIUM**
-
-**Rationale**: High confidence on table stakes (verified with official docs), medium confidence on differentiators (mix of community patterns and tool observation), low-to-medium confidence on some anti-features (based on community wisdom, not official guidance). Did not find comprehensive public examples of automated semantic model generators with full feature lists - most tools are either manual (Tabular Editor) or enterprise/proprietary (AnalyticsCreator).
-
-**Gaps identified:**
-- Limited public documentation on role-playing dimension automation patterns
-- No standard for relationship confidence scoring (appears to be novel)
-- Watermark preservation pattern not found in other tools (may be unique to this implementation)
-- Calculation group scaffolding patterns not well-documented for automation
-
----
-
-*Feature research for: Python TMDL Semantic Model Generator for Microsoft Fabric*
-*Researched: 2026-02-09*
+*Feature research for: Tag-based CD pipeline for PyPI package publishing*
+*Researched: 2026-02-10*
+*Research confidence: HIGH - Based on official PyPI documentation, PyPA tools, recent 2026 guides, and GitHub official documentation*

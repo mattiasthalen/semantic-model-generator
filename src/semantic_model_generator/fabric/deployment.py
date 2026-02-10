@@ -1,16 +1,16 @@
 """Fabric semantic model deployment module."""
 
+from datetime import UTC, datetime
 from typing import Any
 
-import requests  # noqa: F401
+import requests
 
-from semantic_model_generator.fabric.auth import get_fabric_token  # noqa: F401
-from semantic_model_generator.fabric.packaging import package_tmdl_for_fabric  # noqa: F401
-from semantic_model_generator.fabric.polling import (  # noqa: F401
-    get_operation_result,
-    poll_operation,
-)
-from semantic_model_generator.fabric.resolution import is_guid  # noqa: F401
+from semantic_model_generator.fabric.auth import get_fabric_token
+from semantic_model_generator.fabric.packaging import package_tmdl_for_fabric
+from semantic_model_generator.fabric.polling import get_operation_result, poll_operation
+from semantic_model_generator.fabric.resolution import is_guid, resolve_workspace_id
+
+FABRIC_API_BASE = "https://api.fabric.microsoft.com/v1"
 
 
 def find_semantic_model_by_name(workspace_id: str, model_name: str, token: str) -> str | None:
@@ -24,7 +24,18 @@ def find_semantic_model_by_name(workspace_id: str, model_name: str, token: str) 
     Returns:
         Model ID if found, None otherwise.
     """
-    raise NotImplementedError
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    response = requests.get(
+        f"{FABRIC_API_BASE}/workspaces/{workspace_id}/semanticModels", headers=headers
+    )
+    response.raise_for_status()
+
+    models = response.json()["value"]
+    matches = [model for model in models if model["displayName"] == model_name]
+
+    if matches:
+        return matches[0]["id"]  # type: ignore[no-any-return]
+    return None
 
 
 def create_semantic_model(
@@ -43,7 +54,22 @@ def create_semantic_model(
         - 201: (model_id, None)
         - 202: (None, operation_id)
     """
-    raise NotImplementedError
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    payload = {"displayName": display_name, "definition": definition}
+    response = requests.post(
+        f"{FABRIC_API_BASE}/workspaces/{workspace_id}/semanticModels", headers=headers, json=payload
+    )
+    response.raise_for_status()
+
+    if response.status_code == 201:
+        model_id: str = response.json()["id"]
+        return (model_id, None)
+    elif response.status_code == 202:
+        operation_id: str | None = response.headers.get("x-ms-operation-id")
+        return (None, operation_id)
+    else:
+        # Should not reach here due to raise_for_status()
+        return (None, None)
 
 
 def update_semantic_model_definition(
@@ -60,7 +86,22 @@ def update_semantic_model_definition(
     Returns:
         Operation ID if 202 (long-running), None if 200 (immediate).
     """
-    raise NotImplementedError
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    payload = {"definition": definition}
+    url = (
+        f"{FABRIC_API_BASE}/workspaces/{workspace_id}/"
+        f"semanticModels/{semantic_model_id}/updateDefinition?updateMetadata=True"
+    )
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+
+    if response.status_code == 200:
+        return None
+    elif response.status_code == 202:
+        operation_id: str | None = response.headers.get("x-ms-operation-id")
+        return operation_id
+    else:
+        return None
 
 
 def deploy_semantic_model_dev(tmdl_files: dict[str, str], workspace: str, model_name: str) -> str:
@@ -74,7 +115,30 @@ def deploy_semantic_model_dev(tmdl_files: dict[str, str], workspace: str, model_
     Returns:
         Created model ID.
     """
-    raise NotImplementedError
+    # Get token
+    token = get_fabric_token()
+
+    # Resolve workspace if it's a name
+    workspace_id = workspace if is_guid(workspace) else resolve_workspace_id(workspace, token)
+
+    # Generate timestamped name
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    deployment_name = f"{model_name}_{timestamp}"
+
+    # Package TMDL files
+    definition = package_tmdl_for_fabric(tmdl_files)
+
+    # Create semantic model
+    model_id, op_id = create_semantic_model(workspace_id, deployment_name, definition, token)
+
+    # Handle LRO if needed
+    if op_id:
+        poll_operation(op_id, token)
+        result = get_operation_result(op_id, token)
+        model_id = result["id"]
+
+    assert model_id is not None
+    return model_id
 
 
 def deploy_semantic_model_prod(
@@ -94,4 +158,38 @@ def deploy_semantic_model_prod(
     Raises:
         ValueError: If model exists and confirm_overwrite=False.
     """
-    raise NotImplementedError
+    # Get token
+    token = get_fabric_token()
+
+    # Resolve workspace if it's a name
+    workspace_id = workspace if is_guid(workspace) else resolve_workspace_id(workspace, token)
+
+    # Check if model exists
+    existing_id = find_semantic_model_by_name(workspace_id, model_name, token)
+
+    if existing_id and not confirm_overwrite:
+        msg = (
+            f"Semantic model '{model_name}' already exists. "
+            "Pass confirm_overwrite=True to overwrite."
+        )
+        raise ValueError(msg)
+
+    # Package TMDL files
+    definition = package_tmdl_for_fabric(tmdl_files)
+
+    if existing_id:
+        # Update existing model
+        op_id = update_semantic_model_definition(workspace_id, existing_id, definition, token)
+        if op_id:
+            poll_operation(op_id, token)
+        return existing_id
+    else:
+        # Create new model
+        model_id, op_id = create_semantic_model(workspace_id, model_name, definition, token)
+        if op_id:
+            poll_operation(op_id, token)
+            result = get_operation_result(op_id, token)
+            model_id = result["id"]
+
+        assert model_id is not None
+        return model_id

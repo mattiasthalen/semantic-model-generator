@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 5 - TMDL Generation
+**Current focus:** Phase 6 - Output Layer
 
 ## Current Position
 
-Phase: 5 of 8 (TMDL Generation)
-Plan: 2 of 2 complete
-Status: Complete
-Branch: gsd/phase-05-tmdl-generation
-Last activity: 2026-02-09 -- Completed 05-02: Relationships TMDL, metadata files, and orchestrator
+Phase: 6 of 8 (Output Layer)
+Plan: 1 of 2 complete
+Status: In Progress
+Branch: gsd/phase-06-output-layer
+Last activity: 2026-02-10 -- Completed 06-01: Watermark generation, detection, atomic file writing, and WriteSummary
 
-Progress: [████████░░] 50.0% (4 of 8 phases complete)
+Progress: [████████░░] 50.0% (5 of 8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 5.1 min
-- Total execution time: 1.13 hours
+- Total plans completed: 10
+- Average duration: 4.9 min
+- Total execution time: 1.19 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: [████████░░] 50.0% (4 of 8 phases complete)
 | 03 | 3 | 879s | 293s |
 | 04 | 1 | 250s | 250s |
 | 05 | 2 | 712s | 356s |
+| 06 | 1 | 219s | 219s |
 
 **Recent Trend:**
-- Last 5 plans: 03-03 (272s), 04-01 (250s), 05-01 (311s), 05-02 (401s)
-- Trend: Phase 5 complete at 6.7 min average, TDD implementation with comprehensive testing
+- Last 5 plans: 04-01 (250s), 05-01 (311s), 05-02 (401s), 06-01 (219s)
+- Trend: Phase 6 started with efficient TDD execution (3.7 min), watermark and atomic write foundation
 
 *Updated after each plan completion*
 
@@ -95,6 +96,11 @@ Recent decisions affecting current work:
 - [05-02]: definition.pbism includes model name, description, version, author, timestamps per user requirement
 - [05-02]: Diagram layout: facts vertical column, dimensions horizontal row(s), deterministic positioning
 - [05-02]: generate_all_tmdl uses fixed timestamp for deterministic output (production uses actual time)
+- [06-01]: Use datetime.UTC instead of timezone.utc (Python 3.11+ modern API)
+- [06-01]: Simple string containment for watermark detection (not regex) for predictability
+- [06-01]: TMDL-style watermark as safe default for unknown file extensions
+- [06-01]: JSON watermark uses _comment field inserted as first key
+- [06-01]: Atomic writes use tempfile.mkstemp + os.replace pattern for crash safety
 
 ### Pending Todos
 
@@ -108,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-09
-Stopped at: Completed 05-02-PLAN.md - Relationships TMDL, metadata files, and orchestrator. Phase 5 complete.
-Resume file: .planning/phases/05-tmdl-generation/05-02-SUMMARY.md
+Last session: 2026-02-10
+Stopped at: Completed 06-01-PLAN.md - Watermark generation, detection, atomic file writing, and WriteSummary
+Resume file: .planning/phases/06-output-layer/06-01-SUMMARY.md

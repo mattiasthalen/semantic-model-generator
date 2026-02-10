@@ -10,19 +10,19 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 6 of 8 (Output Layer)
-Plan: 1 of 2 complete
-Status: In Progress
+Plan: 2 of 2 complete
+Status: Complete
 Branch: gsd/phase-06-output-layer
-Last activity: 2026-02-10 -- Completed 06-01: Watermark generation, detection, atomic file writing, and WriteSummary
+Last activity: 2026-02-10 -- Completed 06-02: Folder writer with dev/prod modes and watermark preservation
 
-Progress: [████████░░] 50.0% (5 of 8 phases complete)
+Progress: [████████████] 75.0% (6 of 8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 4.9 min
-- Total execution time: 1.19 hours
+- Total plans completed: 11
+- Average duration: 4.7 min
+- Total execution time: 1.22 hours
 
 **By Phase:**
 
@@ -33,11 +33,11 @@ Progress: [████████░░] 50.0% (5 of 8 phases complete)
 | 03 | 3 | 879s | 293s |
 | 04 | 1 | 250s | 250s |
 | 05 | 2 | 712s | 356s |
-| 06 | 1 | 219s | 219s |
+| 06 | 2 | 387s | 194s |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (250s), 05-01 (311s), 05-02 (401s), 06-01 (219s)
-- Trend: Phase 6 started with efficient TDD execution (3.7 min), watermark and atomic write foundation
+- Last 5 plans: 05-01 (311s), 05-02 (401s), 06-01 (219s), 06-02 (168s)
+- Trend: Phase 6 complete with excellent TDD efficiency (avg 3.2 min), output layer foundation ready
 
 *Updated after each plan completion*
 
@@ -101,6 +101,13 @@ Recent decisions affecting current work:
 - [06-01]: TMDL-style watermark as safe default for unknown file extensions
 - [06-01]: JSON watermark uses _comment field inserted as first key
 - [06-01]: Atomic writes use tempfile.mkstemp + os.replace pattern for crash safety
+- [06-02]: Dev mode (default) appends UTC timestamp to folder name for safe iteration
+- [06-02]: Prod mode uses base model name and protects against accidental overwrites
+- [06-02]: FileExistsError raised in prod mode when folder exists and overwrite=False
+- [06-02]: Watermark detection determines if files are overwritten or preserved
+- [06-02]: Byte-identical content reported as unchanged to skip unnecessary writes
+- [06-02]: Extra files on disk not deleted (non-destructive regeneration)
+- [06-02]: Timestamp format YYYYMMDDTHHMMSSz for ISO compact, sortable folder names
 
 ### Pending Todos
 
@@ -115,5 +122,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 06-01-PLAN.md - Watermark generation, detection, atomic file writing, and WriteSummary
-Resume file: .planning/phases/06-output-layer/06-01-SUMMARY.md
+Stopped at: Completed 06-02-PLAN.md - Folder writer with dev/prod modes and watermark preservation. Phase 6 complete.
+Resume file: .planning/phases/06-output-layer/06-02-SUMMARY.md

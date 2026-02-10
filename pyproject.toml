@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
     "mssql-python>=1.0.0",
-    "azure-identity>=1.19",
+    "azure-identity>=1.17.1,<1.19",
     "tenacity>=9.0",
     "requests>=2.31",
 ]

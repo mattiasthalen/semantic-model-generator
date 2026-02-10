@@ -12,39 +12,39 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Connect to Fabric warehouse via mssql-python with token auth — v0.1.0
+- ✓ Read INFORMATION_SCHEMA.COLUMNS for user-specified schemas (no defaults) — v0.1.0
+- ✓ Filter tables by include list and/or exclude list — v0.1.0
+- ✓ Classify tables by key column count: 1 key = dimension, 2+ keys = fact — v0.1.0
+- ✓ Key prefixes are user-supplied, no defaults — v0.1.0
+- ✓ Infer star-schema relationships (fact *:1 dimension) via matching key columns — v0.1.0
+- ✓ Support role-playing dimensions (same dim referenced multiple times with different roles) — v0.1.0
+- ✓ First role-playing relationship active, subsequent ones inactive — v0.1.0
+- ✓ Support exact-match prefixes that bypass role-playing pattern — v0.1.0
+- ✓ Generate complete TMDL folder structure (database, model, expressions, relationships, per-table files) — v0.1.0
+- ✓ Generate DirectLake partition definitions — v0.1.0
+- ✓ Generate deterministic UUIDs for stable IDs across regenerations — v0.1.0
+- ✓ Preserve manually-maintained tables/relationships (watermark-based detection) — v0.1.0
+- ✓ Output mode: write TMDL to folder (dry run) at /lakehouse/default/Files/[MODEL_NAME] — v0.1.0
+- ✓ Output mode: push to Fabric via REST API with LRO polling — v0.1.0
+- ✓ Discover Direct Lake URL programmatically: user supplies workspace (name or GUID) + warehouse/lakehouse (name or GUID), library resolves full GUID-based URL — v0.1.0
+- ✓ Generate diagram layout JSON — v0.1.0
+- ✓ Generate .platform and definition.pbism metadata files — v0.1.0
+- ✓ Distributed as PyPI package — v0.1.0
+- ✓ Dynamic versioning based on git tags — v0.1.0
+- ✓ Functional programming style throughout — v0.1.0
+- ✓ TDD — tests written before implementation — v0.1.0
+- ✓ Linting via make lint — v0.1.0
+- ✓ Type checking via make typecheck — v0.1.0
+- ✓ Testing via make test — v0.1.0
+- ✓ make check runs lint + typecheck + test — v0.1.0
+- ✓ Pre-commit hook runs make check and validates commit message format — v0.1.0
+- ✓ Dev deployment mode: always creates a new semantic model, suffixed with current UTC timestamp — v0.1.0
+- ✓ Prod deployment mode: overwrites existing model, requires explicit confirmation parameter (notebook-friendly, no interactive prompts) — v0.1.0
 
 ### Active
 
-- [ ] Connect to Fabric warehouse via mssql-python with token auth
-- [ ] Read INFORMATION_SCHEMA.COLUMNS for user-specified schemas (no defaults)
-- [ ] Filter tables by include list and/or exclude list
-- [ ] Classify tables by key column count: 1 key = dimension, 2+ keys = fact
-- [ ] Key prefixes are user-supplied, no defaults
-- [ ] Infer star-schema relationships (fact *:1 dimension) via matching key columns
-- [ ] Support role-playing dimensions (same dim referenced multiple times with different roles)
-- [ ] First role-playing relationship active, subsequent ones inactive
-- [ ] Support exact-match prefixes that bypass role-playing pattern
-- [ ] Generate complete TMDL folder structure (database, model, expressions, relationships, per-table files)
-- [ ] Generate DirectLake partition definitions
-- [ ] Generate deterministic UUIDs for stable IDs across regenerations
-- [ ] Preserve manually-maintained tables/relationships (watermark-based detection)
-- [ ] Output mode: write TMDL to folder (dry run) at /lakehouse/default/Files/[MODEL_NAME]
-- [ ] Output mode: push to Fabric via REST API with LRO polling
-- [ ] Discover Direct Lake URL programmatically: user supplies workspace (name or GUID) + warehouse/lakehouse (name or GUID), library resolves full GUID-based URL
-- [ ] Generate diagram layout JSON
-- [ ] Generate .platform and definition.pbism metadata files
-- [ ] Distributed as PyPI package
-- [ ] Dynamic versioning based on git tags
-- [ ] Functional programming style throughout
-- [ ] TDD — tests written before implementation
-- [ ] Linting via make lint
-- [ ] Type checking via make typecheck
-- [ ] Testing via make test
-- [ ] make check runs lint + typecheck + test
-- [ ] Pre-commit hook runs make check and validates commit message format
-- [ ] Dev deployment mode: always creates a new semantic model, suffixed with current UTC timestamp
-- [ ] Prod deployment mode: overwrites existing model, requires explicit confirmation parameter (notebook-friendly, no interactive prompts)
+(None — ready for v0.2.0 planning)
 
 ### Out of Scope
 
@@ -56,14 +56,27 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 
 ## Context
 
-- Reference notebook: `.references/Semantic Model Generator.ipynb` — working prototype with all core logic
-- Target environment: Microsoft Fabric notebooks (PySpark runtime with notebookutils available)
-- Auth: Token-based via `notebookutils.credentials.getToken` (Fabric-specific)
-- Connection: `mssql-python` library for warehouse connectivity
-- The notebook uses Swedish locale in expressions (`Källa`, `sv-SE`) — this should be configurable or use English defaults
-- Current Direct Lake URL requires hardcoded workspace/lakehouse GUIDs — library should accept name or GUID for workspace and warehouse/lakehouse, then resolve to full GUID-based Direct Lake URL via Fabric REST API
-- The existing notebook works against a production warehouse (WH_Gold) with 45 tables and 72 relationships
-- Role-playing dimension support is a key differentiator (e.g., bill-to vs sell-to customer)
+**Shipped v0.1.0 MVP (2026-02-10):**
+- 8 phases complete (15 plans executed)
+- 2,528 lines of Python code
+- 398 tests passing (100% quality gates)
+- Tech stack: hatchling, mssql-python, tenacity, ruff, mypy strict, pytest
+- Reference notebook converted to production library
+
+**Current capabilities:**
+- Warehouse schema discovery with token auth (mssql-python)
+- Fact/dimension classification by key column count
+- Star-schema relationship inference with role-playing dimension support
+- Complete TMDL generation (8 file types + metadata)
+- Dual output: folder writer (dev/prod modes) + Fabric REST API deployment
+- Watermark-based preservation of manual edits
+- End-to-end pipeline with single entry point
+
+**Known limitations addressed:**
+- ✓ Swedish locale hardcoding — now uses en-US in expressions.tmdl
+- ✓ Hardcoded workspace/lakehouse GUIDs — now resolves names via Fabric API
+- ✓ No view filtering — views excluded from discovery
+- ✓ Manual relationship creation — fully automated with role-playing detection
 
 ## Constraints
 
@@ -94,4 +107,4 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 | Tags on milestone completion only | Version tags created at milestone completion, not per-phase; v0.0.1 exists for hatchling VCS bootstrap only | Enforced |
 
 ---
-*Last updated: 2026-02-09 after research phase*
+*Last updated: 2026-02-10 after v0.1.0 milestone completion*

@@ -2,20 +2,20 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-09)
+See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 8 - Pipeline Orchestration and Public API
+**Current focus:** Planning next milestone (v0.2.0)
 
 ## Current Position
 
-Phase: 8 of 8 (Pipeline Orchestration and Public API)
-Plan: 2 of 2 complete
-Status: Complete
-Branch: gsd/phase-08-pipeline-orchestration-public-api
-Last activity: 2026-02-10 -- Completed 08-02: Integration tests and public API exports. Phase 8 complete (2 of 2 plans). All 8 phases complete.
+Milestone: v0.1.0 MVP — SHIPPED 2026-02-10
+Phases: 8 of 8 complete (15 plans)
+Tests: 398 passing
+Branch: main
+Last activity: 2026-02-10 -- Completed v0.1.0 milestone. Ready for v0.2.0 planning.
 
-Progress: [███████████████] 100% (8 of 8 phases complete)
+Progress: v0.1.0 [████████████████████] 100%
 
 ## Performance Metrics
 
@@ -132,12 +132,13 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Research]: TMDL Python examples are sparse (most tooling is .NET-based); may need extra validation in Phase 5
-- [Research - RESOLVED]: Role-playing dimension automation implemented successfully with underscore boundary pattern
-- [Research]: Fabric REST API connection binding for cross-environment deployment needs practical validation in Phase 7
+All v0.1.0 concerns resolved:
+- ✓ TMDL Python examples sparse — generated output validated with 398 tests
+- ✓ Role-playing dimension automation — implemented successfully with underscore boundary pattern
+- ✓ Fabric REST API connection binding — practical validation complete in Phase 7
 
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 08-02-PLAN.md - Integration tests and public API exports. Phase 8 complete (2 of 2 plans). All 8 phases complete.
-Resume file: .planning/phases/08-pipeline-orchestration-public-api/08-02-SUMMARY.md
+Stopped at: Completed v0.1.0 milestone. Archived to .planning/milestones/, tagged v0.1.0.
+Resume file: .planning/MILESTONES.md

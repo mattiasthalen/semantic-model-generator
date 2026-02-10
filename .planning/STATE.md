@@ -62,6 +62,8 @@ Recent decisions affecting current work:
 
 1. **Remove Python 3.12 from CI checks** (ci) - `.github/workflows/ci.yml:14`
    - Fabric only supports 3.11, no value in testing 3.12
+2. **Remove catalog_name parameter redundancy** (api) - `src/semantic_model_generator/pipeline.py:63`
+   - catalog_name and database are always the same in Fabric; remove redundant parameter
 
 ### Blockers/Concerns
 

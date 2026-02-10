@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from semantic_model_generator.fabric import (
     deploy_semantic_model_dev,
@@ -189,9 +189,11 @@ def generate_semantic_model(config: PipelineConfig) -> dict[str, Any]:
         # Folder mode
         try:
             assert config.output_path is not None  # Validated in __post_init__
+            # After __post_init__, output_path is guaranteed to be Path (strings converted)
+            output_path = cast(Path, config.output_path)
             summary = write_tmdl_folder(
                 tmdl_files,
-                config.output_path,
+                output_path,
                 config.model_name,
                 config.dev_mode,
                 config.overwrite,

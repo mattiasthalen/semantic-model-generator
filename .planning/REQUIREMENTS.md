@@ -73,13 +73,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (pending roadmap creation) | — | — |
+| CICD-01 | Phase 9 | Pending |
+| CICD-02 | Phase 9 | Pending |
+| BUILD-01 | Phase 9 | Pending |
+| BUILD-02 | Phase 9 | Pending |
+| BUILD-03 | Phase 9 | Pending |
+| BUILD-04 | Phase 9 | Pending |
+| BUILD-05 | Phase 9 | Pending |
+| BUILD-06 | Phase 9 | Pending |
+| PUB-01 | Phase 9 | Pending |
+| PUB-02 | Phase 9 | Pending |
+| PUB-03 | Phase 9 | Pending |
+| REL-01 | Phase 9 | Pending |
+| REL-02 | Phase 9 | Pending |
+| REL-03 | Phase 9 | Pending |
+| REL-04 | Phase 9 | Pending |
 
 **Coverage:**
 - v0.2.0 requirements: 14 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14 (100% coverage)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-10*
-*Last updated: 2026-02-10 after initial definition*
+*Last updated: 2026-02-10 after roadmap creation*

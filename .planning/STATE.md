@@ -5,17 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-10)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 9 - Automated CD Pipeline
+**Current focus:** Milestone v0.2.0 complete — Ready for next milestone planning
 
 ## Current Position
 
-Milestone: v0.2.0 CD to PyPI
-Phase: 9 of 9 (Automated CD Pipeline)
-Plan: 1 of 1 in current phase
-Status: Phase 9 complete - ready for milestone completion
-Last activity: 2026-02-10 - Completed 09-01-PLAN.md (CD pipeline)
+Milestone: v0.2.0 CD to PyPI — COMPLETE ✅
+Phases: 9 (16 plans total across v0.1.0 + v0.2.0)
+Status: Milestone archived, PROJECT.md evolved, ready for tagging
+Last activity: 2026-02-10 - Completed milestone v0.2.0
 
-Progress: [██████████] 100%
+Progress: v0.2.0 [██████████] 100%
 
 ## Performance Metrics
 
@@ -70,5 +69,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 09-01-PLAN.md (CD pipeline) - Phase 9 complete
+Stopped at: Completed milestone v0.2.0 (archived, tagged, ready for release)
 Resume file: None
+Next: Use `/gsd:new-milestone` to start planning next version

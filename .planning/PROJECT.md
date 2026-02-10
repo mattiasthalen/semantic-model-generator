@@ -12,6 +12,11 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 
 ### Validated
 
+- ✓ Automated PyPI publishing via tag-based GitHub Actions workflow — v0.2.0
+- ✓ OIDC Trusted Publishing to PyPI (no API tokens) — v0.2.0
+- ✓ Quality gates (make check) on Python 3.11 and 3.12 before publish — v0.2.0
+- ✓ Automated GitHub release creation with MILESTONES.md changelog — v0.2.0
+- ✓ Pre-release detection for alpha/beta/rc versions — v0.2.0
 - ✓ Connect to Fabric warehouse via mssql-python with token auth — v0.1.0
 - ✓ Read INFORMATION_SCHEMA.COLUMNS for user-specified schemas (no defaults) — v0.1.0
 - ✓ Filter tables by include list and/or exclude list — v0.1.0
@@ -44,16 +49,9 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 
 ### Active
 
-## Current Milestone: v0.2.0 CD to PyPI
+### Active
 
-**Goal:** Automate PyPI publishing with tag-based GitHub Actions CD pipeline.
-
-**Target features:**
-- GitHub Actions workflow triggered by git tag push
-- Full quality gate validation (make check) before publishing
-- Package build and verification
-- Automated PyPI publishing
-- GitHub release creation with auto-generated changelog, MILESTONES.md link, and PyPI link
+(No active requirements — ready for next milestone planning)
 
 ### Out of Scope
 
@@ -64,6 +62,14 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 - Import mode (only DirectLake)
 
 ## Context
+
+**Shipped v0.2.0 CD to PyPI (2026-02-10):**
+- Phase 9 complete (1 plan executed)
+- Automated CD pipeline with tag-based workflow
+- OIDC Trusted Publishing configured on PyPI
+- GitHub release automation with MILESTONES.md extraction
+- Quality gates run on Python 3.11 and 3.12
+- Ready for first public release to pypi.org
 
 **Shipped v0.1.0 MVP (2026-02-10):**
 - 8 phases complete (15 plans executed)
@@ -112,8 +118,11 @@ Given a Fabric warehouse and a key prefix, automatically produce a correct, depl
 | Key prefixes user-supplied, no defaults | Different warehouses use different key conventions | — Pending |
 | Include/exclude table filtering | Both whitelist and blacklist supported | — Pending |
 | Dev/prod deployment modes | Dev = new model + UTC suffix (safe iteration), Prod = overwrite with explicit confirm (no interactive prompts in notebooks) | — Pending |
-| Per-phase branching | All phase work (research, plans, code) on `gsd/phase-{N}-{slug}`, merged to main on completion | Enforced |
-| Tags on milestone completion only | Version tags created at milestone completion, not per-phase; v0.0.1 exists for hatchling VCS bootstrap only | Enforced |
+| Per-phase branching | All phase work (research, plans, code) on `gsd/phase-{N}-{slug}`, merged to main on completion | ✓ Good |
+| Tags on milestone completion only | Version tags created at milestone completion, not per-phase; v0.0.1 exists for hatchling VCS bootstrap only | ✓ Good |
+| OIDC Trusted Publishing | Use OIDC instead of API tokens for secure PyPI authentication | ✓ Good |
+| MILESTONES.md for changelogs | Extract release notes from MILESTONES.md (not conventional commits) for curated, user-friendly content | ✓ Good |
+| Tag-based CD only | Publish workflow triggers ONLY on v* tags and workflow_dispatch (not main branch) | ✓ Good |
 
 ---
-*Last updated: 2026-02-10 after starting v0.2.0 milestone*
+*Last updated: 2026-02-10 after completing v0.2.0 milestone*

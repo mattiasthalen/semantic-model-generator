@@ -1,0 +1,518 @@
+"""Tests for TMDL folder writer with dev/prod modes and watermark preservation."""
+
+from pathlib import Path
+
+import pytest
+from semantic_model_generator.output.writer import get_output_folder, write_tmdl_folder
+
+from semantic_model_generator.output.watermark import WriteSummary
+
+
+class TestGetOutputFolder:
+    """Tests for get_output_folder function."""
+
+    def test_dev_mode_appends_timestamp_suffix(self):
+        """Dev mode (default) appends timestamp to model name."""
+        result = get_output_folder(
+            base_path=Path("/out"),
+            model_name="My Model",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+        )
+        assert result == Path("/out/My Model_20260210T120000Z")
+
+    def test_prod_mode_uses_base_name(self):
+        """Prod mode uses base model name without timestamp."""
+        result = get_output_folder(
+            base_path=Path("/out"),
+            model_name="My Model",
+            dev_mode=False,
+        )
+        assert result == Path("/out/My Model")
+
+    def test_preserves_model_name_case(self):
+        """Model name case is preserved exactly."""
+        result = get_output_folder(
+            base_path=Path("/out"),
+            model_name="MixedCaseModel",
+            dev_mode=False,
+        )
+        assert result == Path("/out/MixedCaseModel")
+
+    def test_preserves_spaces_in_model_name(self):
+        """Spaces in model name are preserved."""
+        result = get_output_folder(
+            base_path=Path("/out"),
+            model_name="Model With Spaces",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+        )
+        assert result == Path("/out/Model With Spaces_20260210T120000Z")
+
+    def test_dev_mode_with_explicit_timestamp_is_deterministic(self):
+        """Providing explicit timestamp produces deterministic result."""
+        result1 = get_output_folder(
+            Path("/out"), "Model", dev_mode=True, timestamp="20260210T120000Z"
+        )
+        result2 = get_output_folder(
+            Path("/out"), "Model", dev_mode=True, timestamp="20260210T120000Z"
+        )
+        assert result1 == result2
+
+    def test_dev_mode_with_none_timestamp_generates_utc(self):
+        """When timestamp is None, dev mode generates UTC timestamp."""
+        result = get_output_folder(
+            base_path=Path("/out"),
+            model_name="Model",
+            dev_mode=True,
+            timestamp=None,
+        )
+        # Result should match pattern: /out/Model_<timestamp>
+        assert str(result).startswith("/out/Model_")
+        # Timestamp part should be 16 chars: YYYYMMDDTHHMMSSZs
+        timestamp_suffix = result.name.split("_")[1]
+        assert len(timestamp_suffix) == 16
+        assert timestamp_suffix.endswith("Z")
+
+
+class TestWriteTmdlFolder:
+    """Tests for write_tmdl_folder function."""
+
+    def test_creates_correct_directory_structure(self, tmp_path: Path):
+        """Creates definition/ and definition/tables/ subdirectories."""
+        files = {"model.tmdl": "table MyTable"}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        output_folder = result.output_path
+        assert (output_folder / "definition").exists()
+        assert (output_folder / "definition" / "tables").exists()
+
+    def test_writes_all_files_from_dict(self, tmp_path: Path):
+        """All files from input dict are written to disk."""
+        files = {
+            "model.tmdl": "table MyTable",
+            "definition/expressions.tmdl": "expression MyExpr",
+            "definition/tables/Table1.tmdl": "table Table1",
+        }
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        output_folder = result.output_path
+        assert (output_folder / "model.tmdl").exists()
+        assert (output_folder / "definition" / "expressions.tmdl").exists()
+        assert (output_folder / "definition" / "tables" / "Table1.tmdl").exists()
+
+    def test_adds_watermark_to_each_file(self, tmp_path: Path):
+        """Every written file contains the watermark."""
+        files = {
+            "model.tmdl": "table MyTable",
+            "definition.pbism": '{"version": "1.0"}',
+        }
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        output_folder = result.output_path
+
+        # Check TMDL file has triple-slash watermark
+        tmdl_content = (output_folder / "model.tmdl").read_text(encoding="utf-8")
+        assert "/// Auto-generated by semantic-model-generator v1.0.0" in tmdl_content
+        assert "/// Generated: 20260210T120000Z" in tmdl_content
+
+        # Check JSON file has _comment watermark
+        pbism_content = (output_folder / "definition.pbism").read_text(encoding="utf-8")
+        assert "_comment" in pbism_content
+        assert "Auto-generated by semantic-model-generator v1.0.0" in pbism_content
+
+    def test_dev_mode_creates_timestamped_folder(self, tmp_path: Path):
+        """Dev mode creates folder with timestamp suffix."""
+        files = {"model.tmdl": "table MyTable"}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert result.output_path.name == "MyModel_20260210T120000Z"
+        assert result.output_path.exists()
+
+    def test_prod_mode_creates_base_name_folder(self, tmp_path: Path):
+        """Prod mode creates folder with base model name."""
+        files = {"model.tmdl": "table MyTable"}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=False,
+            version="1.0.0",
+        )
+
+        assert result.output_path.name == "MyModel"
+        assert result.output_path.exists()
+
+    def test_prod_mode_raises_error_if_folder_exists_no_overwrite(self, tmp_path: Path):
+        """Prod mode raises FileExistsError when folder exists and overwrite=False."""
+        files = {"model.tmdl": "table MyTable"}
+
+        # Create the folder first
+        model_folder = tmp_path / "MyModel"
+        model_folder.mkdir()
+
+        with pytest.raises(
+            FileExistsError,
+            match=r"Output folder '.*MyModel' already exists.*overwrite=True.*dev mode",
+        ):
+            write_tmdl_folder(
+                files=files,
+                output_path=tmp_path,
+                model_name="MyModel",
+                dev_mode=False,
+                overwrite=False,
+                version="1.0.0",
+            )
+
+    def test_prod_mode_overwrites_when_overwrite_true(self, tmp_path: Path):
+        """Prod mode with overwrite=True proceeds even if folder exists."""
+        files = {"model.tmdl": "table MyTable"}
+
+        # Create the folder first with a watermarked file
+        model_folder = tmp_path / "MyModel"
+        model_folder.mkdir()
+        definition_folder = model_folder / "definition"
+        definition_folder.mkdir()
+        (model_folder / "model.tmdl").write_text(
+            "/// Auto-generated by semantic-model-generator v0.0.1\n"
+            "/// Generated: 2020-01-01T00:00:00Z\n"
+            "/// DO NOT EDIT - remove this header to protect from regeneration\n"
+            "table OldTable",
+            encoding="utf-8",
+        )
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=False,
+            overwrite=True,
+            version="1.0.0",
+            timestamp="20260210T120000Z",
+        )
+
+        assert result.output_path.exists()
+        assert "model.tmdl" in result.written
+        # Check it was actually overwritten
+        content = (model_folder / "model.tmdl").read_text(encoding="utf-8")
+        assert "table MyTable" in content
+        assert "v1.0.0" in content
+
+    def test_skips_files_without_watermark(self, tmp_path: Path):
+        """Files without watermark (manually maintained) are skipped and reported."""
+        # Pre-create a manually maintained file (no watermark)
+        model_folder = tmp_path / "MyModel_20260210T120000Z"
+        model_folder.mkdir()
+        definition_folder = model_folder / "definition"
+        definition_folder.mkdir()
+        manual_file = model_folder / "definition" / "manual.tmdl"
+        manual_file.write_text("table ManualTable\n", encoding="utf-8")
+
+        files = {
+            "model.tmdl": "table MyTable",
+            "definition/manual.tmdl": "table UpdatedManualTable",
+        }
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert "definition/manual.tmdl" in result.skipped
+        assert "definition/manual.tmdl" not in result.written
+        # File should still have original content
+        content = manual_file.read_text(encoding="utf-8")
+        assert "table ManualTable" in content
+        assert "table UpdatedManualTable" not in content
+
+    def test_reports_skipped_files_in_summary(self, tmp_path: Path):
+        """WriteSummary.skipped contains all manually maintained files."""
+        model_folder = tmp_path / "MyModel_20260210T120000Z"
+        model_folder.mkdir()
+        definition_folder = model_folder / "definition"
+        definition_folder.mkdir()
+
+        # Create two manual files
+        (model_folder / "manual1.tmdl").write_text("manual content 1", encoding="utf-8")
+        (definition_folder / "manual2.tmdl").write_text("manual content 2", encoding="utf-8")
+
+        files = {
+            "manual1.tmdl": "new content 1",
+            "definition/manual2.tmdl": "new content 2",
+            "model.tmdl": "table MyTable",
+        }
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert "manual1.tmdl" in result.skipped
+        assert "definition/manual2.tmdl" in result.skipped
+        assert len(result.skipped) == 2
+
+    def test_overwrites_files_with_watermark(self, tmp_path: Path):
+        """Files with watermark are overwritten on regeneration."""
+        model_folder = tmp_path / "MyModel_20260210T120000Z"
+        model_folder.mkdir()
+        definition_folder = model_folder / "definition"
+        definition_folder.mkdir()
+
+        # Create a watermarked file
+        old_file = model_folder / "model.tmdl"
+        old_file.write_text(
+            "/// Auto-generated by semantic-model-generator v0.0.1\n"
+            "/// Generated: 2020-01-01T00:00:00Z\n"
+            "/// DO NOT EDIT - remove this header to protect from regeneration\n"
+            "table OldTable",
+            encoding="utf-8",
+        )
+
+        files = {"model.tmdl": "table NewTable"}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert "model.tmdl" in result.written
+        content = old_file.read_text(encoding="utf-8")
+        assert "table NewTable" in content
+        assert "table OldTable" not in content
+
+    def test_reports_unchanged_files_when_content_identical(self, tmp_path: Path):
+        """Files with byte-identical content are reported as unchanged."""
+        files = {"model.tmdl": "table MyTable"}
+
+        # Write once
+        result1 = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert "model.tmdl" in result1.written
+
+        # Write again with same content and timestamp
+        result2 = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert "model.tmdl" in result2.unchanged
+        assert "model.tmdl" not in result2.written
+
+    def test_does_not_delete_extra_files(self, tmp_path: Path):
+        """Extra files on disk not in generated set are left untouched."""
+        model_folder = tmp_path / "MyModel_20260210T120000Z"
+        model_folder.mkdir()
+        definition_folder = model_folder / "definition"
+        definition_folder.mkdir()
+
+        # Create an extra file not in the generated set
+        extra_file = model_folder / "extra.txt"
+        extra_file.write_text("extra content", encoding="utf-8")
+
+        files = {"model.tmdl": "table MyTable"}
+
+        write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        # Extra file should still exist
+        assert extra_file.exists()
+        assert extra_file.read_text(encoding="utf-8") == "extra content"
+
+    def test_creates_parent_directories_if_output_path_missing(self, tmp_path: Path):
+        """Output directory is created automatically if it doesn't exist."""
+        nested_path = tmp_path / "level1" / "level2" / "level3"
+        assert not nested_path.exists()
+
+        files = {"model.tmdl": "table MyTable"}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=nested_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert result.output_path.exists()
+        assert (result.output_path / "model.tmdl").exists()
+
+    def test_returns_correct_write_summary(self, tmp_path: Path):
+        """WriteSummary contains accurate lists of written, skipped, unchanged files."""
+        # Pre-create folder with manual file
+        model_folder = tmp_path / "MyModel_20260210T120000Z"
+        model_folder.mkdir()
+        definition_folder = model_folder / "definition"
+        definition_folder.mkdir()
+        (model_folder / "manual.tmdl").write_text("manual", encoding="utf-8")
+
+        files = {
+            "model.tmdl": "table MyTable",
+            "definition/expressions.tmdl": "expression MyExpr",
+            "manual.tmdl": "updated manual",
+        }
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="MyModel",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        assert isinstance(result, WriteSummary)
+        assert "model.tmdl" in result.written
+        assert "definition/expressions.tmdl" in result.written
+        assert "manual.tmdl" in result.skipped
+        assert result.output_path == model_folder
+
+    def test_tmdl_files_have_triple_slash_watermark(self, tmp_path: Path):
+        """TMDL files use triple-slash comment watermark."""
+        files = {"model.tmdl": "table MyTable"}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        content = (result.output_path / "model.tmdl").read_text(encoding="utf-8")
+        assert content.startswith("///")
+        assert "/// Auto-generated by semantic-model-generator v1.0.0" in content
+
+    def test_json_files_have_comment_watermark(self, tmp_path: Path):
+        """JSON files use _comment field watermark."""
+        files = {"metadata.json": '{"key": "value"}'}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        content = (result.output_path / "metadata.json").read_text(encoding="utf-8")
+        assert '"_comment"' in content
+        assert "Auto-generated by semantic-model-generator v1.0.0" in content
+
+    def test_pbism_files_have_comment_watermark(self, tmp_path: Path):
+        """PBISM files use _comment field watermark."""
+        files = {"definition.pbism": '{"version": "1.0"}'}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        content = (result.output_path / "definition.pbism").read_text(encoding="utf-8")
+        assert '"_comment"' in content
+        assert "Auto-generated by semantic-model-generator v1.0.0" in content
+
+    def test_platform_files_have_comment_watermark(self, tmp_path: Path):
+        """PLATFORM files use _comment field watermark."""
+        files = {"definition.platform": '{"workspace": "test"}'}
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        content = (result.output_path / "definition.platform").read_text(encoding="utf-8")
+        assert '"_comment"' in content
+        assert "Auto-generated by semantic-model-generator v1.0.0" in content
+
+    def test_write_summary_lists_are_sorted(self, tmp_path: Path):
+        """WriteSummary lists are sorted for determinism."""
+        files = {
+            "z.tmdl": "table Z",
+            "a.tmdl": "table A",
+            "m.tmdl": "table M",
+        }
+
+        result = write_tmdl_folder(
+            files=files,
+            output_path=tmp_path,
+            model_name="Test",
+            dev_mode=True,
+            timestamp="20260210T120000Z",
+            version="1.0.0",
+        )
+
+        # Check that written list is sorted
+        assert list(result.written) == sorted(result.written)

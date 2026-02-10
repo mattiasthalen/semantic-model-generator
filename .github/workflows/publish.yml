@@ -1,0 +1,158 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and dev tools
+        run: |
+          pip install -e .
+          pip install ruff mypy pytest pytest-cov
+
+      - name: Run quality gates
+        run: make check
+
+  build:
+    needs: [validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Validate metadata
+        run: twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+  verify:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install wheel
+        run: pip install dist/*.whl
+
+      - name: Verify import and version
+        run: |
+          python -c "from semantic_model_generator._version import __version__; print(f'Installed version: {__version__}')"
+
+  publish:
+    needs: [verify]
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  release:
+    needs: [publish]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: distributions
+          path: dist/
+
+      - name: Extract changelog
+        id: changelog
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG}"
+
+          # Extract section from MILESTONES.md matching the tag version
+          if grep -q "## ${VERSION}" .planning/MILESTONES.md; then
+            NOTES=$(sed -n "/## ${VERSION}/,/^## /p" .planning/MILESTONES.md | sed '$d')
+          else
+            NOTES="Release ${TAG}. See [full milestone details](.planning/MILESTONES.md) for changes."
+          fi
+
+          # Append links section
+          PACKAGE_VERSION="${VERSION#v}"
+
+          # Write to file for gh release create
+          echo "${NOTES}" > changelog.md
+          echo "" >> changelog.md
+          echo "---" >> changelog.md
+          echo "**Links:**" >> changelog.md
+          echo "- [PyPI Package](https://pypi.org/project/semantic-model-generator/${PACKAGE_VERSION}/)" >> changelog.md
+          echo "- [Full Milestone Details](https://github.com/${GITHUB_REPOSITORY}/blob/main/.planning/MILESTONES.md)" >> changelog.md
+
+      - name: Detect pre-release
+        id: prerelease
+        run: |
+          if [[ "${{ github.ref_name }}" =~ -(rc|beta|alpha) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "${{ steps.prerelease.outputs.is_prerelease }}" == "true" ]]; then
+            gh release create "${{ github.ref_name }}" \
+              --title "${{ github.ref_name }}" \
+              --notes-file changelog.md \
+              --prerelease \
+              dist/*
+          else
+            gh release create "${{ github.ref_name }}" \
+              --title "${{ github.ref_name }}" \
+              --notes-file changelog.md \
+              dist/*
+          fi

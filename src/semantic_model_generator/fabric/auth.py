@@ -29,10 +29,11 @@ def get_fabric_token() -> str:
     """
     if _is_fabric_notebook():
         # Import notebookutils (only available in Fabric notebooks)
-        import notebookutils  # type: ignore  # noqa: PGH003
+        import notebookutils  # noqa: PGH003
 
-        return notebookutils.credentials.getToken(FABRIC_API_RESOURCE)
+        token: str = notebookutils.credentials.getToken(FABRIC_API_RESOURCE)
+        return token
     else:
         credential = DefaultAzureCredential()
-        token = credential.get_token(FABRIC_API_SCOPE)
-        return token.token
+        access_token = credential.get_token(FABRIC_API_SCOPE)
+        return access_token.token

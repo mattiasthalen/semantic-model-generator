@@ -76,9 +76,9 @@ def create_fabric_connection(
     """
     if _is_fabric_notebook():
         # Fabric notebook: use notebookutils token with SQL_COPT_SS_ACCESS_TOKEN
-        import notebookutils  # type: ignore  # noqa: PGH003
+        import notebookutils  # noqa: PGH003
 
-        token = notebookutils.credentials.getToken(SQL_DATABASE_RESOURCE)
+        token: str = notebookutils.credentials.getToken(SQL_DATABASE_RESOURCE)
         token_bytes = token.encode("UTF-16-LE")
 
         # Pack token with length prefix for SQL_COPT_SS_ACCESS_TOKEN

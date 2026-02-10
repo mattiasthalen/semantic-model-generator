@@ -44,10 +44,10 @@ See: `.planning/milestones/v0.1.0-ROADMAP.md` for full phase details
   3. Workflow builds both wheel (.whl) and source distribution (.tar.gz) and verifies installation
   4. Package publishes to pypi.org via OIDC Trusted Publishing without API tokens
   5. GitHub release appears automatically with changelog, PyPI link, and MILESTONES.md link
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 09-01: TBD (awaiting plan-phase)
+- [ ] 09-01-PLAN.md — Create publish.yml CD workflow + configure PyPI Trusted Publishing
 
 ## Progress
 

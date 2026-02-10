@@ -5,6 +5,7 @@ from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
+
 from semantic_model_generator.output.watermark import (
     WriteSummary,
     add_watermark_to_content,

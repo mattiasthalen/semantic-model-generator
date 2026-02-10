@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 7 - Fabric REST API Integration
+**Current focus:** Phase 8 - Pipeline Orchestration and Public API
 
 ## Current Position
 
-Phase: 7 of 8 (Fabric REST API Integration)
+Phase: 8 of 8 (Pipeline Orchestration and Public API)
 Plan: 2 of 2 complete
 Status: Complete
-Branch: gsd/phase-07-fabric-rest-api
-Last activity: 2026-02-10 -- Completed 07-02: Fabric deployment and LRO polling. Phase 7 complete.
+Branch: gsd/phase-08-pipeline-orchestration-public-api
+Last activity: 2026-02-10 -- Completed 08-02: Integration tests and public API exports. Phase 8 complete (2 of 2 plans). All 8 phases complete.
 
-Progress: [██████████████] 87.5% (7 of 8 phases complete)
+Progress: [███████████████] 100% (8 of 8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: 4.9 min
-- Total execution time: 1.40 hours
+- Total plans completed: 15
+- Average duration: 5.0 min
+- Total execution time: 1.51 hours
 
 **By Phase:**
 
@@ -35,10 +35,11 @@ Progress: [██████████████] 87.5% (7 of 8 phases comp
 | 05 | 2 | 712s | 356s |
 | 06 | 2 | 387s | 194s |
 | 07 | 2 | 611s | 306s |
+| 08 | 2 | 468s | 234s |
 
 **Recent Trend:**
-- Last 5 plans: 06-01 (219s), 06-02 (168s), 07-01 (279s), 07-02 (332s)
-- Trend: Phase 7 complete with consistent TDD execution (avg 5.1 min per plan), Fabric REST API integration ready
+- Last 5 plans: 07-01 (279s), 07-02 (332s), 08-01 (318s), 08-02 (150s)
+- Trend: Phase 8 complete (2 of 2 plans). All 8 phases finished. Integration tests and public API added in 2.5 min.
 
 *Updated after each plan completion*
 
@@ -119,6 +120,11 @@ Recent decisions affecting current work:
 - [Phase 07-02]: Dev mode appends UTC timestamp in YYYYMMDDTHHMMSSz format (aligned with Phase 6)
 - [Phase 07-02]: Prod mode requires explicit confirm_overwrite=True for existing models
 - [Phase 07-02]: Failed LRO operations raise RuntimeError with error code and message details
+- [Phase 08-01]: PipelineConfig uses frozen=True and slots=True for immutability and memory efficiency
+- [Phase 08-01]: All validation happens in __post_init__ with clear error messages
+- [Phase 08-01]: Every pipeline stage wrapped in try/except to produce PipelineError with stage name
+- [Phase 08-01]: Folder and Fabric output modes handled in same function with mode branching
+- [Phase 08-01]: Assert statements used for validated optional fields to satisfy type checker
 
 ### Pending Todos
 
@@ -133,5 +139,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 07-02-PLAN.md - Fabric deployment and LRO polling. Phase 7 complete (2 of 2 plans).
-Resume file: .planning/phases/07-fabric-rest-api-integration/07-02-SUMMARY.md
+Stopped at: Completed 08-02-PLAN.md - Integration tests and public API exports. Phase 8 complete (2 of 2 plans). All 8 phases complete.
+Resume file: .planning/phases/08-pipeline-orchestration-public-api/08-02-SUMMARY.md

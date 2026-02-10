@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: TMDL Generation** - Template functions for all TMDL file types, deterministic sorted output
 - [x] **Phase 6: Output Layer** - Filesystem writer, watermark-based preservation of manual edits
 - [x] **Phase 7: Fabric REST API Integration** - Workspace/lakehouse GUID resolution, semantic model deployment, LRO polling
-- [ ] **Phase 8: Pipeline Orchestration & Public API** - Main entry point, end-to-end pipeline, integration tests
+- [x] **Phase 8: Pipeline Orchestration & Public API** - Main entry point, end-to-end pipeline, integration tests
 
 ## Phase Details
 
@@ -144,10 +144,11 @@ Plans:
   2. The function supports both output modes (folder and REST API) via configuration
   3. Errors at any pipeline stage produce clear, actionable error messages identifying the failing stage and cause
   4. End-to-end integration tests pass covering the folder output path with representative warehouse schemas
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 08-01: Pipeline orchestrator, public API function, error handling, integration tests
+- [x] 08-01-PLAN.md -- Pipeline config, error handling, and generate_semantic_model orchestration (TDD)
+- [x] 08-02-PLAN.md -- End-to-end integration tests and public API exports (TDD)
 
 ## Progress
 
@@ -163,4 +164,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 5. TMDL Generation | 2/2 | ✓ Complete | 2026-02-10 |
 | 6. Output Layer | 2/2 | ✓ Complete | 2026-02-10 |
 | 7. Fabric REST API Integration | 2/2 | ✓ Complete | 2026-02-10 |
-| 8. Pipeline Orchestration & Public API | 0/1 | Not started | - |
+| 8. Pipeline Orchestration & Public API | 2/2 | ✓ Complete | 2026-02-10 |

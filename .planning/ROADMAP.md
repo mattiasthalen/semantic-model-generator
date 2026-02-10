@@ -112,10 +112,11 @@ Plans:
   2. Files containing the generator watermark are overwritten on regeneration; files without the watermark are preserved untouched
   3. Dry-run mode writes to folder without any API calls (pure filesystem output)
   4. Dev mode appends UTC timestamp suffix to folder name; prod mode writes to the base model name folder
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 06-01: Filesystem writer, watermark generation, watermark detection, preservation logic
+- [ ] 06-01-PLAN.md -- Watermark generation/detection, atomic file writing, WriteSummary result type (TDD)
+- [ ] 06-02-PLAN.md -- Folder writer with dev/prod modes, watermark-based preservation, overwrite protection (TDD)
 
 ### Phase 7: Fabric REST API Integration
 **Goal**: Library can resolve workspace and lakehouse identifiers, package TMDL output, and deploy a semantic model to Fabric via REST API with long-running operation polling
@@ -159,6 +160,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3. Schema Discovery & Classification | 3/3 | ✓ Complete | 2026-02-09 |
 | 4. Relationship Inference | 1/1 | ✓ Complete | 2026-02-09 |
 | 5. TMDL Generation | 2/2 | ✓ Complete | 2026-02-10 |
-| 6. Output Layer | 0/1 | Not started | - |
+| 6. Output Layer | 0/2 | Not started | - |
 | 7. Fabric REST API Integration | 0/1 | Not started | - |
 | 8. Pipeline Orchestration & Public API | 0/1 | Not started | - |

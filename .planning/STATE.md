@@ -5,24 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-02-09)
 
 **Core value:** Given a Fabric warehouse and a key prefix, automatically produce a correct, deployable TMDL semantic model with proper dimension/fact classification and star-schema relationships.
-**Current focus:** Phase 6 - Output Layer
+**Current focus:** Phase 7 - Fabric REST API Integration
 
 ## Current Position
 
-Phase: 6 of 8 (Output Layer)
+Phase: 7 of 8 (Fabric REST API Integration)
 Plan: 2 of 2 complete
 Status: Complete
-Branch: gsd/phase-06-output-layer
-Last activity: 2026-02-10 -- Completed 06-02: Folder writer with dev/prod modes and watermark preservation
+Branch: gsd/phase-07-fabric-rest-api
+Last activity: 2026-02-10 -- Completed 07-02: Fabric deployment and LRO polling. Phase 7 complete.
 
-Progress: [████████████] 75.0% (6 of 8 phases complete)
+Progress: [██████████████] 87.5% (7 of 8 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 4.7 min
-- Total execution time: 1.22 hours
+- Total plans completed: 13
+- Average duration: 4.9 min
+- Total execution time: 1.40 hours
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: [████████████] 75.0% (6 of 8 phases complete)
 | 04 | 1 | 250s | 250s |
 | 05 | 2 | 712s | 356s |
 | 06 | 2 | 387s | 194s |
+| 07 | 2 | 611s | 306s |
 
 **Recent Trend:**
-- Last 5 plans: 05-01 (311s), 05-02 (401s), 06-01 (219s), 06-02 (168s)
-- Trend: Phase 6 complete with excellent TDD efficiency (avg 3.2 min), output layer foundation ready
+- Last 5 plans: 06-01 (219s), 06-02 (168s), 07-01 (279s), 07-02 (332s)
+- Trend: Phase 7 complete with consistent TDD execution (avg 5.1 min per plan), Fabric REST API integration ready
 
 *Updated after each plan completion*
 
@@ -108,6 +109,16 @@ Recent decisions affecting current work:
 - [06-02]: Byte-identical content reported as unchanged to skip unnecessary writes
 - [06-02]: Extra files on disk not deleted (non-destructive regeneration)
 - [06-02]: Timestamp format YYYYMMDDTHHMMSSz for ISO compact, sortable folder names
+- [07-01]: Use DefaultAzureCredential for Fabric token acquisition (supports multiple auth methods)
+- [07-01]: GUID validation uses regex pattern matching for case-insensitive UUID format
+- [07-01]: Resolution functions accept both names and GUIDs; GUIDs pass through without API calls
+- [07-01]: Fabric API scope: https://api.fabric.microsoft.com/.default
+- [07-01]: Lakehouse and Warehouse resolution share same function with item_type parameter
+- [07-01]: Base64 encoding with UTF-8 support for TMDL content in Fabric API payload
+- [Phase 07-02]: Tenacity exponential backoff for LRO polling (2-30s wait, max 60 attempts)
+- [Phase 07-02]: Dev mode appends UTC timestamp in YYYYMMDDTHHMMSSz format (aligned with Phase 6)
+- [Phase 07-02]: Prod mode requires explicit confirm_overwrite=True for existing models
+- [Phase 07-02]: Failed LRO operations raise RuntimeError with error code and message details
 
 ### Pending Todos
 
@@ -122,5 +133,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 06-02-PLAN.md - Folder writer with dev/prod modes and watermark preservation. Phase 6 complete.
-Resume file: .planning/phases/06-output-layer/06-02-SUMMARY.md
+Stopped at: Completed 07-02-PLAN.md - Fabric deployment and LRO polling. Phase 7 complete (2 of 2 plans).
+Resume file: .planning/phases/07-fabric-rest-api-integration/07-02-SUMMARY.md

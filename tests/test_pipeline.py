@@ -193,6 +193,34 @@ class TestPipelineConfig:
                 item_type="Invalid",
             )
 
+    def test_output_path_converts_string_to_path(self) -> None:
+        """String output_path is automatically converted to Path."""
+        config = PipelineConfig(
+            sql_endpoint="endpoint",
+            database="db",
+            schemas=("dbo",),
+            key_prefixes=("SK_",),
+            model_name="Model",
+            catalog_name="catalog",
+            output_path="./builtin",  # String input
+        )
+        assert isinstance(config.output_path, Path)
+        assert config.output_path == Path("./builtin")
+
+    def test_output_path_accepts_path_object(self) -> None:
+        """Path object output_path remains as Path."""
+        config = PipelineConfig(
+            sql_endpoint="endpoint",
+            database="db",
+            schemas=("dbo",),
+            key_prefixes=("SK_",),
+            model_name="Model",
+            catalog_name="catalog",
+            output_path=Path("/tmp/output"),
+        )
+        assert isinstance(config.output_path, Path)
+        assert config.output_path == Path("/tmp/output")
+
 
 class TestPipelineError:
     """Test PipelineError exception."""

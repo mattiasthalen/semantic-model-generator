@@ -68,7 +68,7 @@ class PipelineConfig:
 
     # Output configuration
     output_mode: str = "folder"
-    output_path: Path | None = None
+    output_path: str | Path | None = None
 
     # Fabric deployment (required for output_mode="fabric")
     workspace: str | None = None
@@ -82,6 +82,10 @@ class PipelineConfig:
 
     def __post_init__(self) -> None:
         """Validate configuration parameters."""
+        # Convert output_path string to Path (frozen dataclass needs object.__setattr__)
+        if self.output_path is not None and not isinstance(self.output_path, Path):
+            object.__setattr__(self, "output_path", Path(self.output_path))
+
         # Validate schemas
         if len(self.schemas) == 0:
             raise ValueError("schemas cannot be empty; at least one schema required")

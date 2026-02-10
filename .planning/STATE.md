@@ -11,18 +11,18 @@ See: .planning/PROJECT.md (updated 2026-02-10)
 
 Milestone: v0.2.0 CD to PyPI
 Phase: 9 of 9 (Automated CD Pipeline)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-10 - Roadmap created for v0.2.0 milestone
+Plan: 1 of 1 in current phase
+Status: Phase 9 complete - ready for milestone completion
+Last activity: 2026-02-10 - Completed 09-01-PLAN.md (CD pipeline)
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 5.0 min
-- Total execution time: 1.51 hours
+- Total plans completed: 16
+- Average duration: 4.8 min
+- Total execution time: 1.52 hours
 
 **By Phase:**
 
@@ -36,10 +36,11 @@ Progress: [████████░░] 80%
 | 06 | 2 | 387s | 194s |
 | 07 | 2 | 611s | 306s |
 | 08 | 2 | 468s | 234s |
+| 09 | 1 | 12s | 12s |
 
 **Recent Trend:**
-- Last 5 plans: 07-01 (279s), 07-02 (332s), 08-01 (318s), 08-02 (150s)
-- Trend: v0.1.0 complete with improving velocity in Phase 8
+- Last 5 plans: 07-02 (332s), 08-01 (318s), 08-02 (150s), 09-01 (12s)
+- Trend: v0.2.0 milestone complete - CD pipeline ready
 
 *Updated: 2026-02-10*
 
@@ -54,6 +55,9 @@ Recent decisions affecting current work:
 - Tags on milestone completion only: Version tags created at milestone completion, not per-phase; v0.0.1 exists for hatchling VCS bootstrap only
 - Use hatchling instead of setuptools for modern build backend with native VCS versioning
 - Install dev tools separately rather than as optional-dependencies to keep build-system.requires minimal
+- OIDC Trusted Publishing: Use OIDC instead of API tokens for secure PyPI authentication
+- Changelog extraction: Extract version-specific sections from MILESTONES.md for GitHub releases
+- Quality gates matrix: Run make check on Python 3.11 and 3.12 with fail-fast: false for debugging
 
 ### Pending Todos
 
@@ -66,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Roadmap creation for v0.2.0 milestone
+Stopped at: Completed 09-01-PLAN.md (CD pipeline) - Phase 9 complete
 Resume file: None

@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Domain Types & Core Utilities** - Immutable data types, deterministic UUIDs, type mapping, validation helpers
 - [x] **Phase 3: Schema Discovery & Classification** - Warehouse connectivity, INFORMATION_SCHEMA reading, table filtering, fact/dimension classification
 - [x] **Phase 4: Relationship Inference** - Key matching, role-playing dimensions, active/inactive marking
-- [ ] **Phase 5: TMDL Generation** - Template functions for all TMDL file types, deterministic sorted output
+- [x] **Phase 5: TMDL Generation** - Template functions for all TMDL file types, deterministic sorted output
 - [ ] **Phase 6: Output Layer** - Filesystem writer, watermark-based preservation of manual edits
 - [ ] **Phase 7: Fabric REST API Integration** - Workspace/lakehouse GUID resolution, semantic model deployment, LRO polling
 - [ ] **Phase 8: Pipeline Orchestration & Public API** - Main entry point, end-to-end pipeline, integration tests
@@ -100,8 +100,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- Core TMDL generation: database.tmdl, model.tmdl, expressions.tmdl, column/partition/table generation with DirectLake partitions (TDD)
-- [ ] 05-02-PLAN.md -- Relationships TMDL, metadata files (.platform, definition.pbism, diagramLayout.json), and generate_all_tmdl orchestrator (TDD)
+- [x] 05-01-PLAN.md -- Core TMDL generation: database.tmdl, model.tmdl, expressions.tmdl, column/partition/table generation with DirectLake partitions (TDD)
+- [x] 05-02-PLAN.md -- Relationships TMDL, metadata files (.platform, definition.pbism, diagramLayout.json), and generate_all_tmdl orchestrator (TDD)
 
 ### Phase 6: Output Layer
 **Goal**: Generated TMDL can be written to a folder on disk, with watermark-based detection that preserves manually-maintained files from being overwritten
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Domain Types & Core Utilities | 2/2 | ✓ Complete | 2026-02-09 |
 | 3. Schema Discovery & Classification | 3/3 | ✓ Complete | 2026-02-09 |
 | 4. Relationship Inference | 1/1 | ✓ Complete | 2026-02-09 |
-| 5. TMDL Generation | 0/2 | Not started | - |
+| 5. TMDL Generation | 2/2 | ✓ Complete | 2026-02-10 |
 | 6. Output Layer | 0/1 | Not started | - |
 | 7. Fabric REST API Integration | 0/1 | Not started | - |
 | 8. Pipeline Orchestration & Public API | 0/1 | Not started | - |

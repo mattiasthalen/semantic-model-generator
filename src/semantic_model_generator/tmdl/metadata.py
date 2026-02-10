@@ -2,7 +2,6 @@
 
 import json
 from collections.abc import Sequence
-from datetime import UTC, datetime
 
 from semantic_model_generator.domain.types import (
     TableClassification,
@@ -46,30 +45,21 @@ def generate_definition_pbism_json(
 ) -> str:
     """Generate definition.pbism JSON file content.
 
-    Per user decision: definition.pbism must include model name, description,
-    version, author (if available), and timestamps.
+    Note: Fabric's definition.pbism schema v1.0.0 only accepts $schema, settings, and version.
+    The model_name, description, author, and timestamp parameters are kept for API compatibility
+    but are not included in the output as Fabric rejects them with schema validation errors.
 
     Args:
-        model_name: Name of the semantic model.
-        description: Model description (default empty).
-        author: Model author (default empty).
-        timestamp: ISO 8601 timestamp for createdAt/modifiedAt (default None = generate now).
+        model_name: Name of the semantic model (not used - kept for compatibility).
+        description: Model description (not used - kept for compatibility).
+        author: Model author (not used - kept for compatibility).
+        timestamp: ISO 8601 timestamp (not used - kept for compatibility).
 
     Returns:
-        JSON string with fabric semanticModel schema, name, description,
-        version, author, createdAt, modifiedAt, and settings.
+        JSON string with fabric semanticModel schema, settings, and version only.
     """
-    # Generate timestamp if not provided
-    if timestamp is None:
-        timestamp = datetime.now(UTC).isoformat()
-
     definition_data = {
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/semanticModel/definitionProperties/1.0.0/schema.json",
-        "author": author,
-        "createdAt": timestamp,
-        "description": description,
-        "modifiedAt": timestamp,
-        "name": model_name,
         "settings": {},
         "version": "4.2",
     }

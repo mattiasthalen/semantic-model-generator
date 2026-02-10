@@ -146,62 +146,33 @@ def test_generate_definition_pbism_json_contains_version() -> None:
     assert isinstance(data["version"], str)
 
 
-def test_generate_definition_pbism_json_contains_name() -> None:
-    """definition.pbism contains name field matching model_name argument."""
+def test_generate_definition_pbism_json_contains_settings() -> None:
+    """definition.pbism contains settings field (required by Fabric schema)."""
     output = generate_definition_pbism_json("TestModel")
     data = json.loads(output)
 
-    assert "name" in data
-    assert data["name"] == "TestModel"
+    assert "settings" in data
+    assert isinstance(data["settings"], dict)
 
 
-def test_generate_definition_pbism_json_contains_description() -> None:
-    """definition.pbism contains description field."""
-    output = generate_definition_pbism_json("TestModel", description="Test description")
+def test_generate_definition_pbism_json_does_not_contain_rejected_properties() -> None:
+    """definition.pbism does not contain properties rejected by Fabric schema.
+
+    Fabric's definition.pbism schema v1.0.0 only accepts $schema, settings, and version.
+    Properties like name, description, author, createdAt, modifiedAt cause validation errors.
+    """
+    output = generate_definition_pbism_json("TestModel", description="Test", author="Author")
     data = json.loads(output)
 
-    assert "description" in data
-    assert data["description"] == "Test description"
+    # These properties must NOT be present - Fabric rejects them
+    assert "name" not in data
+    assert "description" not in data
+    assert "author" not in data
+    assert "createdAt" not in data
+    assert "modifiedAt" not in data
 
-
-def test_generate_definition_pbism_json_contains_author_when_provided() -> None:
-    """definition.pbism contains author field when author argument is provided."""
-    output = generate_definition_pbism_json("TestModel", author="Test Author")
-    data = json.loads(output)
-
-    assert "author" in data
-    assert data["author"] == "Test Author"
-
-
-def test_generate_definition_pbism_json_contains_created_at_timestamp() -> None:
-    """definition.pbism contains createdAt timestamp field."""
-    output = generate_definition_pbism_json("TestModel")
-    data = json.loads(output)
-
-    assert "createdAt" in data
-    # Check it's a valid ISO 8601 timestamp string
-    assert isinstance(data["createdAt"], str)
-    assert "T" in data["createdAt"]  # ISO format has T separator
-
-
-def test_generate_definition_pbism_json_contains_modified_at_timestamp() -> None:
-    """definition.pbism contains modifiedAt timestamp field."""
-    output = generate_definition_pbism_json("TestModel")
-    data = json.loads(output)
-
-    assert "modifiedAt" in data
-    # Check it's a valid ISO 8601 timestamp string
-    assert isinstance(data["modifiedAt"], str)
-    assert "T" in data["modifiedAt"]
-
-
-def test_generate_definition_pbism_json_empty_author_handling() -> None:
-    """definition.pbism handles empty author string (includes key with empty value)."""
-    output = generate_definition_pbism_json("TestModel", author="")
-    data = json.loads(output)
-
-    # With empty author, the key should still be present (for determinism)
-    assert "author" in data
+    # Only these three properties should be present
+    assert set(data.keys()) == {"$schema", "settings", "version"}
 
 
 def test_generate_definition_pbism_json_is_deterministic_with_fixed_timestamp() -> None:

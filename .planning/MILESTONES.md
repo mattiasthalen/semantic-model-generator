@@ -1,5 +1,22 @@
 # Milestones
 
+## v0.2.0 CD to PyPI (Shipped: 2026-02-10)
+
+**Phases completed:** Phase 9 (Automated CD Pipeline) — 1 plan, 2 tasks
+
+**Key accomplishments:**
+- Complete GitHub Actions CD workflow with 5-job pipeline (validate → build → verify → publish → release)
+- OIDC Trusted Publishing to PyPI configured (no API tokens required)
+- Automated GitHub release creation with changelog extraction from MILESTONES.md
+- Quality gates run on Python 3.11 and 3.12 with fail-fast: false for debugging
+- Pre-release detection for alpha/beta/rc versions with automatic pre-release marking
+- Tag-based versioning workflow with manual workflow_dispatch fallback
+
+**Delivered:**
+Tag-based CD pipeline that validates via make check, builds wheel and sdist distributions, verifies installation, publishes to pypi.org via OIDC, and creates GitHub releases with curated changelogs.
+
+---
+
 ## v0.1.0 MVP (Shipped: 2026-02-10)
 
 **Phases completed:** 8 phases, 15 plans, 6 tasks

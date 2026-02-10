@@ -30,7 +30,7 @@ Requirements for automated CD pipeline to PyPI. Each maps to roadmap phases.
 ### Release Automation
 
 - [ ] **REL-01**: GitHub release created automatically on tag push
-- [ ] **REL-02**: Release notes generated from conventional commits since last tag
+- [ ] **REL-02**: Release notes extracted from .planning/MILESTONES.md matching tag version
 - [ ] **REL-03**: Release notes include direct link to PyPI package page
 - [ ] **REL-04**: Release notes include link to .planning/MILESTONES.md
 

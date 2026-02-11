@@ -110,8 +110,8 @@ def test_generate_model_tmdl_contains_discourage_implicit_measures() -> None:
     assert "\tdiscourageImplicitMeasures" in output
 
 
-def test_generate_model_tmdl_contains_ref_table_lines() -> None:
-    """Model TMDL contains ref table lines for each table."""
+def test_generate_model_tmdl_does_not_contain_ref_table_lines() -> None:
+    """Model TMDL does not contain ref table lines (removed for Fabric API compatibility)."""
     table_names = ["dbo.DimCustomer", "dbo.FactSales"]
     classifications = {
         ("dbo", "DimCustomer"): TableClassification.DIMENSION,
@@ -119,54 +119,10 @@ def test_generate_model_tmdl_contains_ref_table_lines() -> None:
     }
     output = generate_model_tmdl("TestModel", table_names, classifications)
 
-    assert "\tref table DimCustomer" in output
-    assert "\tref table FactSales" in output
-
-
-def test_generate_model_tmdl_dimensions_before_facts() -> None:
-    """Model TMDL lists dimension tables before fact tables."""
-    table_names = ["dbo.FactSales", "dbo.DimCustomer", "dbo.DimProduct"]
-    classifications = {
-        ("dbo", "FactSales"): TableClassification.FACT,
-        ("dbo", "DimCustomer"): TableClassification.DIMENSION,
-        ("dbo", "DimProduct"): TableClassification.DIMENSION,
-    }
-    output = generate_model_tmdl("TestModel", table_names, classifications)
-
-    # Find positions of ref table lines
-    dim_customer_pos = output.find("ref table DimCustomer")
-    dim_product_pos = output.find("ref table DimProduct")
-    fact_sales_pos = output.find("ref table FactSales")
-
-    # Dimensions should appear before facts
-    assert dim_customer_pos < fact_sales_pos
-    assert dim_product_pos < fact_sales_pos
-
-
-def test_generate_model_tmdl_alphabetical_within_classification() -> None:
-    """Model TMDL sorts tables alphabetically within same classification."""
-    table_names = ["dbo.DimProduct", "dbo.DimCustomer"]
-    classifications = {
-        ("dbo", "DimProduct"): TableClassification.DIMENSION,
-        ("dbo", "DimCustomer"): TableClassification.DIMENSION,
-    }
-    output = generate_model_tmdl("TestModel", table_names, classifications)
-
-    dim_customer_pos = output.find("ref table DimCustomer")
-    dim_product_pos = output.find("ref table DimProduct")
-
-    # DimCustomer should appear before DimProduct (alphabetical)
-    assert dim_customer_pos < dim_product_pos
-
-
-def test_generate_model_tmdl_quotes_special_characters() -> None:
-    """Model TMDL quotes table names with special characters."""
-    table_names = ["dbo.Dim Customer"]  # Space in name
-    classifications = {("dbo", "Dim Customer"): TableClassification.DIMENSION}
-    output = generate_model_tmdl("TestModel", table_names, classifications)
-
-    quoted_name = quote_tmdl_identifier("Dim Customer")
-    assert f"ref table {quoted_name}" in output
+    # ref table lines should NOT be present
+    assert "ref table" not in output
+    assert "DimCustomer" not in output
+    assert "FactSales" not in output
 
 
 def test_generate_model_tmdl_passes_whitespace_validation() -> None:

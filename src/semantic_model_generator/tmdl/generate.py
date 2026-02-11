@@ -40,39 +40,18 @@ def generate_model_tmdl(
     """Generate model.tmdl file content.
 
     Args:
-        model_name: Name of the semantic model.
-        table_names: Sorted list of fully qualified table names (schema.table).
-        classifications: Map of (schema_name, table_name) to TableClassification.
+        model_name: Name of the semantic model (unused, kept for API compatibility).
+        table_names: Unused - kept for API compatibility.
+        classifications: Unused - kept for API compatibility.
 
     Returns:
-        TMDL model definition with culture, ref table lines, dimensions sorted before facts.
+        TMDL model definition with culture and model properties.
+
+    Note:
+        This function no longer includes "ref table" lines for Fabric API compatibility.
+        Fabric infers the model structure from definition/tables/*.tmdl files automatically.
     """
     indent1 = indent_tmdl(1)
-
-    # Parse and sort tables: dimensions first, then facts, then unclassified
-    # Within each group, sort by (schema_name, table_name)
-    def parse_qualified_name(qualified_name: str) -> tuple[str, str]:
-        """Parse 'schema.table' into (schema, table)."""
-        parts = qualified_name.split(".", 1)
-        if len(parts) == 2:
-            return parts[0], parts[1]
-        return "", parts[0]
-
-    def sort_key(qualified_name: str) -> tuple[int, str, str]:
-        """Generate sort key for table: (classification_order, schema, table)."""
-        schema, table = parse_qualified_name(qualified_name)
-        classification = classifications.get((schema, table), TableClassification.UNCLASSIFIED)
-
-        # Primary sort: dimension=0, fact=1, unclassified=2
-        classification_order = {
-            TableClassification.DIMENSION: 0,
-            TableClassification.FACT: 1,
-            TableClassification.UNCLASSIFIED: 2,
-        }
-
-        return (classification_order[classification], schema, table)
-
-    sorted_tables = sorted(table_names, key=sort_key)
 
     # Build model content
     lines = ["model Model"]
@@ -80,11 +59,9 @@ def generate_model_tmdl(
     lines.append(f"{indent1}defaultPowerBIDataSourceVersion: powerBI_V3")
     lines.append(f"{indent1}discourageImplicitMeasures")
 
-    # Add ref table lines
-    for qualified_name in sorted_tables:
-        _, table_name = parse_qualified_name(qualified_name)
-        quoted_table = quote_tmdl_identifier(table_name)
-        lines.append(f"{indent1}ref table {quoted_table}")
+    # Note: "ref table" lines are NOT included for Fabric API compatibility
+    # Fabric infers tables from definition/tables/*.tmdl files automatically
+    # The ref keyword is only needed for Power BI Desktop TMDL roundtrip ordering
 
     content = "\n".join(lines) + "\n"
 

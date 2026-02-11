@@ -80,11 +80,12 @@ def generate_model_tmdl(
     lines.append(f"{indent1}defaultPowerBIDataSourceVersion: powerBI_V3")
     lines.append(f"{indent1}discourageImplicitMeasures")
 
-    # Add ref table lines
+    # Add ref table lines at root level (no indent) separated by blank line
+    lines.append("")
     for qualified_name in sorted_tables:
         _, table_name = parse_qualified_name(qualified_name)
         quoted_table = quote_tmdl_identifier(table_name)
-        lines.append(f"{indent1}ref table {quoted_table}")
+        lines.append(f"ref table {quoted_table}")
 
     content = "\n".join(lines) + "\n"
 

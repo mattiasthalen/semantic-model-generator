@@ -119,8 +119,8 @@ def test_generate_model_tmdl_contains_ref_table_lines() -> None:
     }
     output = generate_model_tmdl("TestModel", table_names, classifications)
 
-    assert "\tref table DimCustomer" in output
-    assert "\tref table FactSales" in output
+    assert "\nref table DimCustomer" in output
+    assert "\nref table FactSales" in output
 
 
 def test_generate_model_tmdl_dimensions_before_facts() -> None:

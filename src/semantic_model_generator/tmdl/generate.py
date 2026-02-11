@@ -390,12 +390,7 @@ def generate_all_tmdl(
 
     # Metadata files
     output[".platform"] = generate_platform_json(model_name)
-    # Use a fixed timestamp for deterministic output
-    # In production, this would be the actual generation time
-    fixed_timestamp = "2024-01-01T00:00:00+00:00"
-    output["definition.pbism"] = generate_definition_pbism_json(
-        model_name, timestamp=fixed_timestamp
-    )
+    output["definition.pbism"] = generate_definition_pbism_json()
 
     # TMDL definition files
     output["definition/database.tmdl"] = generate_database_tmdl()

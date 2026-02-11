@@ -308,7 +308,7 @@ class TestGenerateSemanticModelFolderMode:
         mock_classify.assert_called_once_with(mock_tables, ("SK_",))
         mock_infer.assert_called_once_with(mock_tables, mock_classifications, ("SK_",))
         mock_generate.assert_called_once_with(
-            "Model", mock_tables, mock_classifications, mock_relationships, ("SK_",), "catalog"
+            "Model", mock_tables, mock_classifications, mock_relationships, ("SK_",), "catalog", ""
         )
         mock_write.assert_called_once_with(mock_tmdl, Path("/tmp/output"), "Model", True, False)
 
@@ -518,8 +518,12 @@ class TestGenerateSemanticModelFabricMode:
     @patch("semantic_model_generator.pipeline.filter_tables")
     @patch("semantic_model_generator.pipeline.discover_tables")
     @patch("semantic_model_generator.pipeline.create_fabric_connection")
+    @patch("semantic_model_generator.pipeline.resolve_direct_lake_url")
+    @patch("semantic_model_generator.pipeline.get_fabric_token")
     def test_fabric_dev_mode_calls_deploy_dev(
         self,
+        mock_token: MagicMock,
+        mock_resolve_url: MagicMock,
         mock_connect: MagicMock,
         mock_discover: MagicMock,
         mock_filter: MagicMock,
@@ -530,6 +534,8 @@ class TestGenerateSemanticModelFabricMode:
     ) -> None:
         """dev_mode=True calls deploy_semantic_model_dev."""
         # Setup mocks
+        mock_token.return_value = "fake-token"
+        mock_resolve_url.return_value = "https://onelake.dfs.fabric.microsoft.com/ws-id/lh-id"
         mock_connect.return_value = MagicMock()
         mock_tables = (TableMetadata("dbo", "T", ()),)
         mock_discover.return_value = mock_tables
@@ -568,8 +574,12 @@ class TestGenerateSemanticModelFabricMode:
     @patch("semantic_model_generator.pipeline.filter_tables")
     @patch("semantic_model_generator.pipeline.discover_tables")
     @patch("semantic_model_generator.pipeline.create_fabric_connection")
+    @patch("semantic_model_generator.pipeline.resolve_direct_lake_url")
+    @patch("semantic_model_generator.pipeline.get_fabric_token")
     def test_fabric_prod_mode_calls_deploy_prod(
         self,
+        mock_token: MagicMock,
+        mock_resolve_url: MagicMock,
         mock_connect: MagicMock,
         mock_discover: MagicMock,
         mock_filter: MagicMock,
@@ -580,6 +590,8 @@ class TestGenerateSemanticModelFabricMode:
     ) -> None:
         """dev_mode=False calls deploy_semantic_model_prod."""
         # Setup mocks
+        mock_token.return_value = "fake-token"
+        mock_resolve_url.return_value = "https://onelake.dfs.fabric.microsoft.com/ws-id/lh-id"
         mock_connect.return_value = MagicMock()
         mock_tables = (TableMetadata("dbo", "T", ()),)
         mock_discover.return_value = mock_tables
@@ -618,8 +630,12 @@ class TestGenerateSemanticModelFabricMode:
     @patch("semantic_model_generator.pipeline.filter_tables")
     @patch("semantic_model_generator.pipeline.discover_tables")
     @patch("semantic_model_generator.pipeline.create_fabric_connection")
+    @patch("semantic_model_generator.pipeline.resolve_direct_lake_url")
+    @patch("semantic_model_generator.pipeline.get_fabric_token")
     def test_fabric_mode_returns_result(
         self,
+        mock_token: MagicMock,
+        mock_resolve_url: MagicMock,
         mock_connect: MagicMock,
         mock_discover: MagicMock,
         mock_filter: MagicMock,
@@ -630,6 +646,8 @@ class TestGenerateSemanticModelFabricMode:
     ) -> None:
         """Returns dict with mode, model_id, and model_name."""
         # Setup mocks
+        mock_token.return_value = "fake-token"
+        mock_resolve_url.return_value = "https://onelake.dfs.fabric.microsoft.com/ws/lh"
         mock_connect.return_value = MagicMock()
         mock_tables = (TableMetadata("dbo", "T", ()),)
         mock_discover.return_value = mock_tables
@@ -664,8 +682,12 @@ class TestGenerateSemanticModelFabricMode:
     @patch("semantic_model_generator.pipeline.filter_tables")
     @patch("semantic_model_generator.pipeline.discover_tables")
     @patch("semantic_model_generator.pipeline.create_fabric_connection")
+    @patch("semantic_model_generator.pipeline.resolve_direct_lake_url")
+    @patch("semantic_model_generator.pipeline.get_fabric_token")
     def test_deployment_error_wraps_as_pipeline_error(
         self,
+        mock_token: MagicMock,
+        mock_resolve_url: MagicMock,
         mock_connect: MagicMock,
         mock_discover: MagicMock,
         mock_filter: MagicMock,
@@ -676,6 +698,8 @@ class TestGenerateSemanticModelFabricMode:
     ) -> None:
         """Deployment failure raises PipelineError with stage=deployment."""
         # Setup mocks
+        mock_token.return_value = "fake-token"
+        mock_resolve_url.return_value = "https://onelake.dfs.fabric.microsoft.com/ws/lh"
         mock_connect.return_value = MagicMock()
         mock_tables = (TableMetadata("dbo", "T", ()),)
         mock_discover.return_value = mock_tables

@@ -7,7 +7,9 @@ from typing import Any, cast
 from semantic_model_generator.fabric import (
     deploy_semantic_model_dev,
     deploy_semantic_model_prod,
+    resolve_direct_lake_url,
 )
+from semantic_model_generator.fabric.auth import get_fabric_token
 from semantic_model_generator.output import write_tmdl_folder
 from semantic_model_generator.schema import (
     classify_tables,
@@ -171,6 +173,19 @@ def generate_semantic_model(config: PipelineConfig) -> dict[str, Any]:
     except Exception as e:
         raise PipelineError("relationships", f"Failed to infer relationships: {e}", e) from e
 
+    # Stage 5.5: Resolve Direct Lake URL (fabric mode only)
+    direct_lake_url = ""
+    if config.output_mode == "fabric":
+        try:
+            assert config.workspace is not None
+            assert config.lakehouse_or_warehouse is not None
+            token = get_fabric_token()
+            direct_lake_url = resolve_direct_lake_url(
+                config.workspace, config.lakehouse_or_warehouse, token, config.item_type
+            )
+        except Exception as e:
+            raise PipelineError("resolution", f"Failed to resolve Direct Lake URL: {e}", e) from e
+
     # Stage 6: TMDL generation
     try:
         tmdl_files = generate_all_tmdl(
@@ -180,6 +195,7 @@ def generate_semantic_model(config: PipelineConfig) -> dict[str, Any]:
             relationships,
             config.key_prefixes,
             config.catalog_name,
+            direct_lake_url,
         )
     except Exception as e:
         raise PipelineError("tmdl_generation", f"Failed to generate TMDL: {e}", e) from e

@@ -99,11 +99,13 @@ def generate_model_tmdl(
     return content
 
 
-def generate_expressions_tmdl(catalog_name: str) -> str:
+def generate_expressions_tmdl(catalog_name: str, direct_lake_url: str = "") -> str:
     """Generate expressions.tmdl file content.
 
     Args:
         catalog_name: Fabric catalog name for DirectLake expression.
+        direct_lake_url: OneLake URL for DirectLake connection
+            (e.g., "https://onelake.dfs.fabric.microsoft.com/{workspace}/{item}").
 
     Returns:
         TMDL expressions with DirectLake expression template and en-US locale.
@@ -118,7 +120,7 @@ def generate_expressions_tmdl(catalog_name: str) -> str:
     # Use en-US locale with English "Source" variable name (not Swedish "Kalla")
     content = f"""expression 'DirectLake - {catalog_name}' =
 {indent2}let
-{indent3}Source = AzureStorage.DataLake("", [HierarchicalNavigation=true])
+{indent3}Source = AzureStorage.DataLake("{direct_lake_url}", [HierarchicalNavigation=true])
 {indent2}in
 {indent3}Source
 {indent1}lineageTag: {lineage_tag}
@@ -344,6 +346,7 @@ def generate_all_tmdl(
     relationships: Sequence[Relationship],
     key_prefixes: Sequence[str],
     catalog_name: str,
+    direct_lake_url: str = "",
 ) -> dict[str, str]:
     """Generate complete TMDL semantic model as a dict of file paths to content.
 
@@ -354,6 +357,7 @@ def generate_all_tmdl(
         relationships: All inferred relationships.
         key_prefixes: Prefixes identifying key columns.
         catalog_name: Fabric catalog name for DirectLake expression.
+        direct_lake_url: OneLake URL for DirectLake connection.
 
     Returns:
         Dict mapping relative file paths to their content strings.
@@ -398,7 +402,7 @@ def generate_all_tmdl(
     output["definition/model.tmdl"] = generate_model_tmdl(
         model_name, table_qualified_names, classifications
     )
-    output["definition/expressions.tmdl"] = generate_expressions_tmdl(catalog_name)
+    output["definition/expressions.tmdl"] = generate_expressions_tmdl(catalog_name, direct_lake_url)
     output["definition/relationships.tmdl"] = generate_relationships_tmdl(relationships)
 
     # Table files

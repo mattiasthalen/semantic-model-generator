@@ -200,10 +200,10 @@ def generate_partition_tmdl(table: TableMetadata, partition_name: str, catalog_n
     # Build partition definition
     content = f"""{indent1}partition {quoted_partition} = entity
 {indent2}mode: directLake
-{indent2}source =
+{indent2}source
 {indent3}entityName: {table.table_name}
-{indent3}expressionSource: 'DirectLake - {catalog_name}'
 {indent3}schemaName: {table.schema_name}
+{indent3}expressionSource: 'DirectLake - {catalog_name}'
 """
 
     # Validate before returning
